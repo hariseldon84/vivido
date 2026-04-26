@@ -1,0 +1,19 @@
+{
+  "name": "vivido",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vivido — Next-generation video creation platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:desktop": "npm run dev --workspace=apps/desktop",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces"
+  }
+}
