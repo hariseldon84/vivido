@@ -47,4 +47,20 @@ NOT building for: Educators, Loom-replacement, B2B enterprise.
 - ALWAYS auto-save every 30 seconds minimum
 - ALWAYS show version history as visible, accessible UI — not hidden
 
+## Gstack Configuration
+Use /browse skill from gstack for all web browsing.
+Never use mcp__claude-in-chrome__* tools.
+
+Available gstack skills:
+/office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review,
+/design-consultation, /design-shotgun, /design-html, /review, /ship,
+/land-and-deploy, /canary, /benchmark, /browse, /connect-chrome, /qa,
+/qa-only, /design-review, /setup-browser-cookies, /setup-deploy, /retro,
+/investigate, /document-release, /codex, /cso, /autoplan,
+/plan-devex-review, /devex-review, /careful, /freeze, /guard, /unfreeze,
+/gstack-upgrade, /learn
+
+If gstack skills aren't working:
+cd .claude/skills/gstack && ./setup
+
 ## Monorepo Structure
