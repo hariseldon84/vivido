@@ -1,0 +1,41 @@
+installation:
+  version: 6.5.0
+  installDate: 2026-04-26T11:24:47.941Z
+  lastUpdated: 2026-04-26T11:30:21.209Z
+modules:
+  - name: core
+    version: 6.5.0
+    installDate: 2026-04-26T11:24:47.663Z
+    lastUpdated: 2026-04-26T11:30:21.172Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+  - name: bmm
+    version: 6.5.0
+    installDate: 2026-04-26T11:24:47.738Z
+    lastUpdated: 2026-04-26T11:30:21.172Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+  - name: bmb
+    version: v1.7.0
+    installDate: 2026-04-26T11:24:47.877Z
+    lastUpdated: 2026-04-26T11:30:21.209Z
+    source: external
+    npmPackage: bmad-builder
+    repoUrl: https://github.com/bmad-code-org/bmad-builder
+    channel: stable
+    sha: 86033fc9aeae2ca6d52c7cdb675c1f4bf17fc1c1
+ides:
+  - claude-code
+  - codex
+  - cursor
+  - github-copilot
+  - gemini
+  - antigravity
+  - mistral-vibe
+  - openclaw
+  - opencode
+  - qwen
+  - trae
+  - windsurf
