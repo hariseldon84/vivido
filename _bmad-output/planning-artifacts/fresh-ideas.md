@@ -269,6 +269,318 @@ Not MVP. The smallest version of Vivido that already feels like a legend — whe
 
 ---
 
+## Classification: Tree of Thoughts — What is Vivido, Actually?
+
+Three parallel framings evaluated against: PRD clarity, build speed, 10-year ceiling, moat strength, GTM sharpness, founder's edge, rawvision alignment.
+
+**Path A — Filmmaker's Desktop Tool:** Competes with FCP/DaVinci. Desktop-first, native GPU, local-first. Strong ceiling, but GTM is broad and build is slow.
+
+**Path B — Creator Intelligence Platform:** Competes with Adobe Creative Suite. Per-creator style model is the core asset. Desktop is the interface, platform is the moat. Highest ceiling, best patent story, requires platform discipline from day one.
+
+**Path C — YouTube Stack Killer:** Competes with the 7-tool creator workflow. Eliminates $1,500/yr of tools. Fastest GTM, sharpest positioning, time-boxed CapCut opportunity. Ceiling risks capping at "YouTube editor."
+
+**Selected: B + C Hybrid**
+- Start as Path C (YouTube stack killer — fastest to market, sharpest GTM)
+- Architect as Path B (intelligence platform — style model + patents built from day one, invisible to users)
+- Path A (filmmaker's tool) is the 2029 story — architecture must not prevent it
+
+**Locked Classification:**
+- Type: Desktop App (Electron, primary UX) + Web App (React+Vite, sync/collab) — platform-architected from day one
+- Domain: Creator Economy → Filmmaker Tools (2026: YouTube entry, 2029: film expansion)
+- Complexity: High
+- Context: Greenfield
+- One-line: *Vivido launches as the YouTube creator's final stack and grows into the filmmaker's OS.*
+
+**Debate Club Showdown Verdict: Platform-first wins 4.5 — 0.5**
+
+Synthesis (more useful than the score):
+> Design as a platform. Ship as a desktop app.
+
+- Project file format, creator identity, and style model data schema: designed for platform from day one (low cost now, enormous cost to fix later)
+- Desktop app ships first and must be undeniably fast and native — performance never compromised by platform abstractions
+- Platform features (sync, collab, cross-device, plugin API) ship in stages — but architecture permits them from day one
+- Style model as compounding data asset requires cloud persistence — local-only style model is a feature, not a moat
+- The movement comes from the experience. The irreplaceability comes from the platform.
+
+**Cross-Functional War Room — 7 Non-Negotiable Decisions Before PRD Locks**
+
+B+C Hybrid Classification Under the Microscope
+
+  The room: Three people, one table, one question — "Can we actually build what we've described, and what are we not seeing?"
+
+  SARA — Product Manager (user advocacy, market timing, scope)
+  DEV — Lead Engineer (feasibility, technical debt, build order)
+  LUNA — Design Lead (experience, consistency, interaction model)
+
+  ---
+  SARA: I want to start with the one thing that scares me about B+C. We're saying "YouTube stack killer" as the GTM — sharp, clear, CapCut refugees, Windows
+   creators. But we're also saying "architect as a platform from day one." Those two things create a tension. The platform architecture requires us to get
+  the creator identity model, the project file schema, and the style model data design right before we ship. That's invisible work. Work that doesn't make
+  the product feel better on day one. How do we communicate to early users that the slower-than-expected ship date is worth it?
+
+  DEV: It's not actually slower if we scope it correctly. Creator identity is Supabase Auth — that's already in the stack, it's a weekend. Project file
+  schema is a JSON document format decision — we make it once, we document it, we never change it without a migration. Style model initialization is passive
+   — it collects data from completed projects, it doesn't need to be ML-ready on day one. It can start as a JSON accumulator. The intelligence layer gets
+  smarter as the data grows. None of this blocks shipping the editor. What blocks shipping is the timeline engine, FFmpeg bindings, and GPU decode — those
+  are the hard problems. Platform architecture doesn't slow those down.
+
+  LUNA: I have a different concern. The "YouTube stack killer" positioning implies a very specific user flow — the creator who currently uses 7 tools. But
+  the "platform from day one" architecture implies a creator identity, a workspace, a project library, a style model. That's onboarding overhead. When a
+  creator drops their footage and hits instant playback in 15 seconds — that's the jaw-drop moment. But if they had to create an account, set up a
+  workspace, and name their channel before they got there — we've already lost them. How do we reconcile frictionless first contact with the identity model
+  the platform requires?
+
+  DEV: Guest mode. The editor launches without an account. Full functionality. Style model accumulates locally. On project completion — "Save to cloud and
+  start your style model" — one-click account creation at the moment of maximum value delivery, not maximum friction. The platform identity exists. It just
+  doesn't block the first experience.
+
+  LUNA: That solves the first session. But it creates a product debt: the UI has to work in two modes — authenticated and guest. Every feature that touches
+  the cloud needs a graceful degraded state for guest users. That's not impossible but it's not nothing. Every screen needs to answer: "What does this look
+  like when there's no account?"
+
+  SARA: This is actually a feature, not a bug. "Try Vivido — no account required" is a better acquisition hook than "Sign up to edit." Final Cut Pro doesn't
+   ask you to create an account. DaVinci Resolve doesn't. If Vivido requires an account to start editing, we've instantly positioned ourselves closer to
+  VEED and Descript — web SaaS — and further from FCP and DaVinci — professional desktop tools. Guest mode is brand-consistent.
+
+  DEV: Agreed. Let me raise the harder tension though — the style model as a platform moat requires cloud persistence. A guest user's style model lives
+  on-device. If they reinstall Vivido, it's gone. If they get a new machine, it's gone. The moat only becomes real when the creator authenticates. So the
+  conversion moment — guest to authenticated — is actually the most important product moment we haven't designed yet. It's not "sign up to unlock features."
+   It's "your style model has been building since project 1 — here's what it knows about you — save it so you never lose it."
+
+  LUNA: That's a beautiful conversion moment. "Project 5 complete. Vivido has learned something about how you edit. Don't lose it." — with a one-tap account
+   creation. The value is shown before the ask is made. That's the right sequence.
+
+  SARA: Okay, new concern. The "grows into the filmmaker's OS" arc — 2026 YouTube, 2029 film. What specifically does "film" require that "YouTube" doesn't,
+  and are any of those requirements incompatible with decisions we're making now?
+
+  DEV: Three things. First, longer timelines — a feature film is 90+ minutes, 500+ clips. The timeline data model needs to handle this without performance
+  degradation. If we design for 30-minute YouTube content only, we'll hit a wall at 90 minutes. Second, color management — film uses ACES, Log footage, LUTs
+   with specific color science. YouTube creators use sRGB. If the color pipeline is built for sRGB only, ACES support is a rewrite. Third, project file size
+   — a film project with 4K dailies is terabytes. The cloud sync architecture needs to handle asset references, not full file copies. If we build "sync the
+  whole project" we'll never scale to film.
+
+  LUNA: And from a design perspective — the UI language for a YouTube creator is "fast, opinionated, guided." The UI language for a filmmaker is "powerful,
+  precise, flexible." Those aren't incompatible but they require a layered design system — simple defaults with deep controls available. If we build the
+  YouTube experience with no expandable layers, we'll have to redesign the whole thing for film. If we build the film experience first, it'll overwhelm
+  YouTube creators. The design system needs to be layered from day one.
+
+  SARA: So the decisions we need to make right now — before the PRD locks — are:
+  1. Timeline data model must support 90+ min / 500+ clips from day one
+  2. Color pipeline must be designed for ACES/Log compatibility, even if we only expose sRGB initially
+  3. Cloud sync architecture uses asset references, not full file copies
+  4. UI design system is layered — simple defaults, deep controls always available
+  5. Guest mode is the default first session — conversion at moment of maximum value
+
+  DEV: I'd add one more. The project file format should be open and documented — not proprietary. If a creator can open their Vivido project file in a text
+  editor and understand it, they trust us. If it's a black box binary, we're Adobe. Open format is a brand decision, not just a technical one.
+
+  LUNA: And the design system needs a name and a language — not just "simple vs advanced." Something that tells the team: this is the vocabulary, this is
+  how complexity is revealed, this is the interaction grammar. FCP has one. DaVinci has one. Vivido needs one before the first screen is designed.
+
+| # | Decision | Why Now |
+|---|---|---|
+| 1 | Timeline data model supports 90+ min, 500+ clips from day one | Retrofit = rewrite |
+| 2 | Color pipeline designed for ACES/Log even if sRGB-only on launch | Color architecture is foundational |
+| 3 | Cloud sync uses asset references, not full file copies | Film-scale requires this; retrofit = rewrite |
+| 4 | Layered UI design system — simple defaults, deep controls always accessible | Film expansion requires this; retrofit = redesign |
+| 5 | Guest mode is the default first session — account creation at moment of max value delivery | FCP/DaVinci brand positioning + acquisition hook |
+| 6 | Project file format is open and documented (not proprietary binary) | Creator sovereignty + brand trust |
+| 7 | Style model conversion (guest → authenticated) is a product feature, not a signup form | Moat only compounds if creators authenticate — show value before the ask |
+
+**Comparative Analysis Matrix — Final Composite Score: 7.8/10**
+
+Scored across: Moat Strength (30%), Build Feasibility (25%), Market Timing (25%), 10-Year Ceiling (20%).
+
+| Dimension | Score | Signal |
+|---|---|---|
+| Moat Strength | 8.0/10 | Style model is real but becomes a moat at 10K+ users, not at launch |
+| Build Feasibility | **5.9/10** | ⚠️ Lowest score — consistent across all analysts. The kill list is a 3-year roadmap, not a launch checklist |
+| Market Timing | 9.0/10 | CapCut window is open NOW — exceptional timing |
+| 10-Year Ceiling | 8.4/10 | Platform architecture + ADR-001-C compound correctly |
+
+**Matrix mandate:** The PRD must define the MLP with ruthless precision. Every feature not in the MLP must be explicitly staged to S2 or S3. If the PRD tries to ship everything, the CapCut window closes while still building.
+
+**The formula:** Ship the MLP fast. Build the platform underneath it.
+
+---
+
+**Recording Capability — Added to Vivido Scope**
+
+Vivido records. Not just imports. Recording is a first-class feature — the session starts in Vivido and never leaves.
+
+Recording modes:
+- **Screencast** — Full screen, specific window, or custom region capture (replaces Loom, Riverside screen share)
+- **Webcam** — Solo talking head, or picture-in-picture with screen (replaces Loom, Riverside)
+- **Multi-track** — Screen + webcam + system audio + mic audio recorded as separate tracks simultaneously. Each track is a clean, uncompressed local file — not a compressed stream (Riverside's core differentiator, now inside Vivido)
+- **Scene Composer** — Multiple sources with layout presets: Interview (two cameras), Tutorial (screen + corner cam), Podcast (audio-primary with visual), Cinematic (full webcam, no screen). Inspired by OBS scene system but with creator-friendly presets.
+- **Local-first capture** — All recording writes to disk before any cloud operation. No recording loss from network drops. WAV for audio (uncompressed), source resolution for video — never compressed at capture (per CLAUDE.md architecture decisions)
+
+Kill shots added:
+- **Kills Loom** — Screen + webcam recording, instant project creation after capture
+- **Kills Riverside.fm standalone** — Multi-track local recording, studio-quality guest recording (future: remote guest tracks via WebRTC, each recorded locally)
+- **Kills OBS as standalone for non-streaming creators** — Scene composer covers tutorial/interview/podcast setups without OBS complexity
+
+Recording → Timeline handoff:
+- Capture ends → project auto-created → footage already in timeline → Whisper runs immediately
+- No import step. No file management. Record stops, edit starts.
+
+**Architecture Note (ADR-001-C extension):** Recording capture runs entirely in the Native Runtime (Electron main process). OS-level capture APIs (ScreenCaptureKit on Mac, Windows.Graphics.Capture on Windows) are invoked from the main process. Renderer shows the recording preview and controls via IPC. This keeps the UI responsive during capture and ensures local-first file writing at full quality.
+
+---
+
+**Architecture Decision Record — ADR-001-C: Dual-Runtime with Explicit Compute Boundary (ACCEPTED)**
+Method: Architecture Decision Records                                                                                                                     
+                                                                                                                                                          
+  The Core Architecture — Three Formal ADRs                                                                                                                 
+   
+  Format: Each architect proposes a formal ADR. The team evaluates. One ADR is accepted. The others are recorded as rejected alternatives with reasons.     
+                                                                  
+  ---                                                                                                                                                       
+  ADR-001-A (Proposed by: Vikram, Systems Architect)              
+                                                                                                                                                            
+  Title: Electron-Native-First — Main Process as the Power Layer
+                                                                                                                                                            
+  Context: Vivido needs native GPU decode, FFmpeg, local ML inference, and file system access. The question is where the architectural weight lives.        
+                                                                                                                                                            
+  Decision Proposed: The Electron main process IS the product. The renderer (React+Vite) is a UI shell that dispatches to the main process for all compute. 
+  No heavy work in the browser context. FFmpeg WASM is not used — FFmpeg native only, invoked via Node.js child_process from the main process. WebCodecs is
+  used only for lightweight preview frames. The web app (Vercel deployment) is a minimal companion: account management, project sharing, analytics          
+  dashboard.                                                      
+
+  Consequences — Positive:
+  - Maximum native performance. GPU decode, FFmpeg native, OS media APIs (VideoToolbox/NVENC) all run at full hardware speed
+  - No WASM overhead. FFmpeg WASM is 30-60% slower than native FFmpeg for transcoding operations                                                            
+  - Clear mental model: main process owns compute, renderer owns UI. No ambiguity               
+  - Offline-first is natural — the main process doesn't need a network connection to function                                                               
+                                                                                                                                                            
+  Consequences — Negative:                                                                                                                                  
+  - Web app is permanently a second-class citizen. Features built for Electron don't transfer to web                                                        
+  - If Vivido ever needs a web editor (mobile browser, Chromebook, enterprise), it's a rewrite                                                              
+  - Testing is harder — main process logic requires Electron test harnesses, not standard browser testing
+  - The renderer becomes a thin shell — complex UI state must be serialized over IPC, which creates latency for real-time operations                        
+                                                                                                                                                            
+  Status: Proposed                                                                                                                                          
+                                                                                                                                                            
+  ---                                                                                                                                                       
+  ADR-001-B (Proposed by: Zara, Web Platform Architect)                                                                                                     
+                                                                  
+  Title: Web-First with Electron Enhancement Layer
+                                                                                                                                                            
+  Context: Same as above.
+                                                                                                                                                            
+  Decision Proposed: React+Vite IS the product. Electron adds only what the browser cannot do: native file dialogs, OS menu bar, window management, and a   
+  bridge to native FFmpeg for export-time operations. All editing operations — cuts, trims, audio adjustments, real-time preview — use WebCodecs and browser
+   APIs. FFmpeg WASM handles lightweight operations. FFmpeg native (via Electron IPC) is invoked only for final export. The style model runs in a Web       
+  Worker. The web app deployment and the desktop app share 100% of the codebase except a thin platform adapter layer.
+
+  Consequences — Positive:
+  - Web app and desktop app are the same product. Zero code divergence
+  - Full browser testing stack works — Playwright, Vitest, no Electron test harness needed                                                                  
+  - Faster iteration — hot reload works across the full app, not just the renderer        
+  - Future mobile/web editing is free — same codebase, different platform adapter                                                                           
+                                                                                                                                                            
+  Consequences — Negative:                                                                                                                                  
+  - WebCodecs is powerful but has limits. 4K real-time decode in a browser context requires a very fast machine — on older hardware, it stutters            
+  - FFmpeg WASM for lightweight operations means every operation goes through a WASM boundary — not catastrophic but measurable                             
+  - "Web-first" creates a ceiling: some OS-level integrations (GPU compute shaders for color grading, OS audio routing) are simply not accessible from a
+  browser context                                                                                                                                           
+  - The user experiences "a web app in a window" which contradicts Vivido's brand positioning as a native desktop tool                                      
+                                                                                                                                                            
+  Status: Proposed                                                                                                                                          
+                                                                  
+  ---                                                                                                                                                       
+  ADR-001-C (Proposed by: Kenji, Platform Architect)              
+                                                                                                                                                            
+  Title: Dual-Runtime with Explicit Compute Boundary              
+                                                                                                                                                            
+  Context: Same as above. This ADR rejects the false choice between A and B.                                                                                
+                                                                                                                                                            
+  Decision Proposed: Two distinct runtime environments with a shared data layer and explicit IPC contracts:                                                 
+                                                                  
+  Browser Runtime (Renderer Process): Owns all UI, interaction state, and lightweight media operations. WebCodecs for scrubbing preview                     
+  (hardware-accelerated in browser). Waveform visualization via Web Audio API. Timeline state management. Transcript editing. Export configuration UI. All
+  UI state lives here.                                                                                                                                      
+                                                                  
+  Native Runtime (Electron Main Process + Node.js): Owns all heavy compute. FFmpeg native for export, transcoding, audio extraction. Local Whisper inference
+   (via whisper.cpp, C++ binding). Style model inference and update (lightweight JSON accumulation initially, ML later). File system operations. GPU compute
+   for color grading operations that exceed browser capability.                                                                                             
+                                                                  
+  Shared Data Layer: Project file (open JSON format, documented). Asset manifest (references, not copies). Creator style model (local JSON, synced to       
+  Supabase). All IPC between browser and native runtime goes through typed message contracts — no raw IPC.
+                                                                                                                                                            
+  The Contract: Browser runtime can always render. Native runtime handles operations that would block the UI. Result: UI never freezes waiting for FFmpeg.  
+  Scrubbing is always smooth. Exports happen in the background via the native runtime.
+                                                                                                                                                            
+  Web App (Vercel): Shares 100% of the UI layer with the desktop renderer. Platform adapter detects context (Electron vs browser) and routes compute        
+  requests accordingly. In browser: WebCodecs + WASM fallback. In Electron: native runtime via IPC.
+                                                                                                                                                            
+  Consequences — Positive:                                        
+  - Best of both worlds: native performance for heavy compute, web portability for UI
+  - UI never blocks — all heavy operations are async to the native runtime           
+  - Web app and desktop share UI codebase — zero divergence               
+  - Clear boundaries make testing tractable: browser runtime tests with standard tools, native runtime tests with Node.js test harness                      
+  - Future: native runtime can run headless for cloud render queue (AWS Lambda or self-hosted) — same FFmpeg bindings, different host                       
+                                                                                                                                                            
+  Consequences — Negative:                                                                                                                                  
+  - IPC contracts add latency for real-time operations that cross the boundary (e.g., frame-accurate preview during complex color operations)               
+  - Two test environments, not one — browser tests AND native runtime tests                                                                                 
+  - More complex initial architecture than A or B — requires discipline to maintain the boundary                                                            
+                                                                                                                                                            
+  Status: Proposed                                                                                                                                          
+                                                                                                                                                            
+  ---                                                                                                                                                       
+  Architecture Review                                             
+                     
+  ┌───────────────────────────┬──────────────────────────────┬──────────────────────────────┬──────────────────────────────────────────────────┐
+  │         Criterion         │   ADR-001-A (Native-First)   │    ADR-001-B (Web-First)     │             ADR-001-C (Dual-Runtime)             │            
+  ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 4K real-time scrubbing    │ ✅ Best                      │ ⚠️  Hardware-dependent        │ ✅ Best (WebCodecs for scrub, native for export) │            
+  ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────────────────────────┤
+  │ Export performance        │ ✅ Best                      │ ⚠️  FFmpeg WASM penalty       │ ✅ Best (native FFmpeg)                          │            
+  ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────────────────────────┤
+  │ UI never blocks           │ ⚠️  Requires careful IPC      │ ✅ Web Workers               │ ✅ Explicit async boundary                       │            
+  ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────────────────────────┤            
+  │ Web app parity            │ ❌ Rewrite required          │ ✅ Same codebase             │ ✅ Same UI codebase                              │
+  ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────────────────────────┤            
+  │ Future film/ACES support  │ ✅ Native GPU shaders        │ ❌ Browser ceiling           │ ✅ Native runtime extensible                     │
+  ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────────────────────────┤            
+  │ Testing tractability      │ ❌ Electron harness          │ ✅ Standard browser tools    │ ⚠️  Two environments                              │
+  ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────────────────────────┤            
+  │ Cloud render queue future │ ⚠️  Main process not portable │ ❌ WASM on Lambda is painful │ ✅ Native runtime = headless capable             │
+  ├───────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────────────────────────┤            
+  │ Brand: "feels native"     │ ✅ Fully native              │ ❌ Feels like a web app      │ ✅ Native where it matters                       │
+  └───────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────────────────────────┘            
+                                                                  
+  ---                                                                                                                                                       
+  Accepted: ADR-001-C — Dual-Runtime with Explicit Compute Boundary
+                                                                                                                                                            
+  Rationale: ADR-001-A sacrifices web parity and testing. ADR-001-B sacrifices native performance and brand positioning. ADR-001-C is more complex but
+  resolves both problems without compromise. The explicit compute boundary is not a liability — it's a design principle. The boundary also positions the    
+  native runtime as a reusable compute layer: today it runs in Electron, tomorrow it runs headless in a cloud render queue, the day after it runs on-device
+  on an Apple Silicon chip doing ML inference.                                                                                                              
+                                                                  
+  The one non-negotiable: IPC contracts between browser and native runtime are typed and documented from day one. No raw IPC. No "we'll formalize it later."
+   The contract IS the architecture.
+                                                                                                                                                            
+  Rejected:                                                       
+  - ADR-001-A: Rejected — web parity sacrificed, future film features require headless native runtime anyway
+  - ADR-001-B: Rejected — performance ceiling contradicts core brand positioning; "feels like a web app" is fatal 
+
+Two distinct runtime environments, shared data layer, typed IPC contracts:
+
+- **Browser Runtime (Renderer):** UI, interaction state, WebCodecs scrubbing preview, waveform via Web Audio API, timeline state, transcript editing. Always renders. Never blocks.
+- **Native Runtime (Electron Main + Node.js):** FFmpeg native (export/transcode), Whisper.cpp (local inference), style model accumulation, file system, GPU color operations. Headless-capable — same runtime runs in cloud render queue.
+- **Shared Data Layer:** Open JSON project file, asset manifest (references not copies), creator style model (local JSON synced to Supabase). All IPC via typed message contracts — no raw IPC, ever.
+- **Web App (Vercel):** Shares 100% of UI codebase. Platform adapter routes compute to WebCodecs+WASM (browser) or native runtime via IPC (Electron).
+
+**Non-negotiable:** IPC contracts are typed and documented from day one. The contract IS the architecture.
+
+**Rejected:**
+- ADR-001-A (Native-First): Web parity sacrificed; future headless cloud render requires native runtime anyway
+- ADR-001-B (Web-First): Performance ceiling contradicts brand positioning; "feels like a web app" is fatal for Vivido
+
+---
+
 ## Method 5b: Anti-Patterns Audit → Vivido Design Laws
 
 The 12 design laws derived from the sins of FCP, Premiere, and DaVinci:
@@ -487,3 +799,135 @@ Generates a first-pass rough cut from raw footage using the creator's style mode
 | Social job is "be perceived as professional" | Output quality must be visibly higher than what they currently ship |
 | No one hires for "AI features" | AI is invisible infrastructure — sell the result, not the technology |
 | Biggest unmet hire is Moment #4 | First-time serious filmmakers — untapped by every pro tool |
+
+
+## New Method 5: Comparative Analysis Matrix
+
+  Scoring the full Vivido proposition — classification + ADR-001-C + 7 War Room decisions + Recording — against weighted criteria before the PRD locks.
+
+  Analysts: Three independent evaluators score Vivido's locked direction against four weighted dimensions. Disagreements are flagged.
+
+  ---
+  The Scoring Framework
+
+  ┌───────────────────┬────────┬───────────────────────────────────────────────────────────────────────┐
+  │     Dimension     │ Weight │                           What it measures                            │
+  ├───────────────────┼────────┼───────────────────────────────────────────────────────────────────────┤
+  │ Moat Strength     │ 30%    │ How hard is this to replicate in 18 months by a well-funded team?     │
+  ├───────────────────┼────────┼───────────────────────────────────────────────────────────────────────┤
+  │ Build Feasibility │ 25%    │ Can one founder + small team execute this to MLP without burning out? │
+  ├───────────────────┼────────┼───────────────────────────────────────────────────────────────────────┤
+  │ Market Timing     │ 25%    │ Is now the right moment, and how time-boxed is the opportunity?       │
+  ├───────────────────┼────────┼───────────────────────────────────────────────────────────────────────┤
+  │ 10-Year Ceiling   │ 20%    │ Does this direction compound or plateau?                              │
+  └───────────────────┴────────┴───────────────────────────────────────────────────────────────────────┘
+
+  Scale: 1–10 per dimension. Weighted score out of 10.
+
+  ---
+  Analyst A — Maya (VC, creator tools portfolio)
+
+  ┌───────────────┬────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │   Dimension   │ Score  │                                                         Reasoning                                                          │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │               │        │ Per-creator style model is genuinely novel. Patents #1 and #3 are real. No competitor is building this. Adobe could — but  │
+  │ Moat Strength │ 8/10   │ won't, because it contradicts their per-seat revenue model. Risk: open-source community could replicate the style model in │
+  │               │        │  2–3 years.                                                                                                                │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Build         │        │ Dual-runtime architecture is the right call but adds complexity. Recording + editing + AI + audio room + YouTube           │
+  │ Feasibility   │ 6/10   │ primitives in one product is ambitious for a small team. The MLP (4 features) is achievable — the full kill list is a      │
+  │               │        │ 3-year roadmap. Founder must be ruthless about sequencing.                                                                 │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │               │        │ CapCut ban created a 264M-user displacement event. The window is 18–24 months before another tool consolidates those       │
+  │ Market Timing │ 9/10   │ users. Windows creator market is underpenetrated. This is the best possible moment to launch a YouTube-native desktop      │
+  │               │        │ editor.                                                                                                                    │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 10-Year       │ 9/10   │ The platform-first architecture and patent strategy point toward licensing revenue, creator movement, and film expansion.  │
+  │ Ceiling       │        │ Ceiling is genuinely high if the data flywheel is built correctly from day one.                                            │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Weighted      │ 8.0/10 │ Strong. The build feasibility is the only yellow flag — sequencing discipline is the make-or-break variable.               │
+  │ Score         │        │                                                                                                                            │
+  └───────────────┴────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Analyst B — Ravi (Senior Engineer, ex-Adobe)
+
+  ┌───────────────┬────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │   Dimension   │ Score  │                                                         Reasoning                                                          │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │               │        │ Style model moat is real but requires significant ML data to become defensible. At 100 users it's a feature. At 10,000     │
+  │ Moat Strength │ 7/10   │ users it starts becoming a moat. At 100,000 users it's genuinely hard to replicate. The path from feature to moat requires │
+  │               │        │  user acquisition — the moat doesn't exist at launch.                                                                      │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Build         │        │ Honest assessment: dual-runtime + recording + Whisper + FFmpeg native + style model + Audio Room + YouTube primitives is   │
+  │ Feasibility   │ 5/10   │ 18–24 months of serious engineering for a 3-person team. Not impossible, but the MLP scope needs to be genuinely minimum.  │
+  │               │        │ The 4-feature MLP is right — the kill list is a multi-year roadmap, not a v1.                                              │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Market Timing │ 8/10   │ CapCut window is real and time-boxed. The risk is that Descript, CapCut's replacement apps, and a Chinese alternative fill │
+  │               │        │  the vacuum before Vivido ships. Speed matters more than completeness at launch.                                           │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 10-Year       │        │ ADR-001-C is the right architecture for the 10-year vision. The native runtime as a headless compute layer — today         │
+  │ Ceiling       │ 8/10   │ Electron, tomorrow cloud — is a strong foundation. ACES color pipeline and 90-min timeline support from day one are the    │
+  │               │        │ right non-negotiables.                                                                                                     │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Weighted      │ 6.9/10 │ Solid. Build feasibility is the honest constraint. The MLP must be ruthlessly scoped or the CapCut window closes while     │
+  │ Score         │        │ still building.                                                                                                            │
+  └───────────────┴────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Analyst C — Jess (Creator, 180K subscribers, ex-CapCut user)
+
+  ┌───────────────┬────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │   Dimension   │ Score  │                                                         Reasoning                                                          │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │               │        │ As a creator: the style model is the thing I've always wanted and never had. FCP doesn't know me. Premiere doesn't know    │
+  │ Moat Strength │ 9/10   │ me. The idea that my editor gets better with every video I make — that's not a feature, that's a relationship. I would     │
+  │               │        │ never leave a tool that knows me like that.                                                                                │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Build         │        │ From a user perspective: I don't need all 7 kill shots on day one. I need: instant 4K playback, clean transcript editing,  │
+  │ Feasibility   │ 7/10   │ Shorts markers in the timeline, and Publish Package. If Vivido does those four things perfectly on Windows, I'm canceling  │
+  │               │        │ Premiere and Opus Clip on day one.                                                                                         │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Market Timing │ 10/10  │ I'm literally looking for a CapCut replacement right now. Every creator I know is. The timing is not "good" — it's urgent. │
+  │               │        │  If Vivido launched tomorrow with just the MLP, I'd tell every creator I know.                                             │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 10-Year       │ 8/10   │ I care less about the 10-year ceiling and more about whether Vivido exists in 2 years. But the film expansion makes sense  │
+  │ Ceiling       │        │ — a lot of YouTube creators want to make documentaries. The ceiling doesn't feel artificial.                               │
+  ├───────────────┼────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Weighted      │ 8.7/10 │ Highest score. The creator's perspective validates the entire direction. Market timing is the strongest signal — the       │
+  │ Score         │        │ window is open right now.                                                                                                  │
+  └───────────────┴────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Final Composite Score
+
+  ┌───────────────────┬────────┬──────┬──────┬──────┬──────────────┐
+  │     Dimension     │ Weight │ Maya │ Ravi │ Jess │ Weighted Avg │
+  ├───────────────────┼────────┼──────┼──────┼──────┼──────────────┤
+  │ Moat Strength     │ 30%    │ 8    │ 7    │ 9    │ 8.0          │
+  ├───────────────────┼────────┼──────┼──────┼──────┼──────────────┤
+  │ Build Feasibility │ 25%    │ 6    │ 5    │ 7    │ 5.9          │
+  ├───────────────────┼────────┼──────┼──────┼──────┼──────────────┤
+  │ Market Timing     │ 25%    │ 9    │ 8    │ 10   │ 9.0          │
+  ├───────────────────┼────────┼──────┼──────┼──────┼──────────────┤
+  │ 10-Year Ceiling   │ 20%    │ 9    │ 8    │ 8    │ 8.4          │
+  ├───────────────────┼────────┼──────┼──────┼──────┼──────────────┤
+  │ Composite         │        │ 8.0  │ 6.9  │ 8.7  │ 7.8 / 10     │
+  └───────────────────┴────────┴──────┴──────┴──────┴──────────────┘
+
+  ---
+  Matrix Verdict
+
+  7.8/10 — Strong direction. One critical constraint.
+
+  The matrix validates everything except one dimension: Build Feasibility (5.9/10) — the lowest-scoring dimension across all three analysts. This is the
+  consistent signal.
+
+  The one thing this matrix demands before the PRD locks:
+
+  ▎ The PRD must define the MLP with ruthless precision. The kill list is a 3-year roadmap, not a launch checklist. Every feature that is not in the MLP
+  must be explicitly staged to Stage 2 or Stage 3. If the PRD tries to ship everything, the CapCut window closes while still building.
+
+  Everything else is strong. Market timing (9.0) is exceptional. Moat (8.0) is real. Ceiling (8.4) is genuine.
+
+  Ship the MLP fast. Build the platform underneath it.
