@@ -1,0 +1,32 @@
+cat > .gitignore << 'EOF'
+# Node
+node_modules/
+.npm
+
+# Build outputs
+dist/
+.next/
+.vite/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# BMAD output (optional — commit when ready for review)
+# _bmad-output/
+
+# claude-mem database (personal, not team)
+.claude-mem/
+
+# Electron
+out/
+release/
+
+# Supabase
+.supabase/
+EOF
