@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vivido — Audio Room</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-base: #0e0e10;
+    --bg-panel: #141416;
+    --bg-surface: #1a1a1e;
+    --bg-elevated: #222226;
+    --bg-hover: #2a2a30;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.12);
+    --accent: #6366f1;
+    --accent-dim: rgba(99,102,241,0.15);
+    --accent-bright: #818cf8;
+    --teal: #14b8a6;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --text-primary: #f0f0f4;
+    --text-secondary: #8b8b9a;
+    --text-muted: #4a4a58;
+    --text-accent: #818cf8;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+    font-size: 12px; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: grid;
+    grid-template-rows: 36px 1fr;
+    height: 100vh;
+  }
+
+  /* Titlebar */
+  .titlebar {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 12px; gap: 8px; user-select: none;
+  }
+  .traffic-lights { display: flex; gap: 6px; margin-right: 8px; }
+  .tl { width: 12px; height: 12px; border-radius: 50%; }
+  .tl-red { background: #ff5f57; }
+  .tl-yellow { background: #febc2e; }
+  .tl-green { background: #28c840; }
+  .app-logo { font-size: 13px; font-weight: 700; letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px; }
+  .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .view-tabs {
+    display: flex; gap: 2px; margin-left: 20px;
+    background: var(--bg-surface); border-radius: 6px; padding: 2px;
+    border: 1px solid var(--border);
+  }
+  .vtab { padding: 3px 12px; border-radius: 4px; font-size: 11px; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
+  .vtab.active { background: var(--bg-elevated); color: var(--text-primary); }
+  .vtab:hover:not(.active) { color: var(--text-secondary); }
+  .tb-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .tb-btn {
+    height: 24px; padding: 0 10px;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 5px; color: var(--text-secondary);
+    font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s;
+  }
+  .tb-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .tb-btn.primary { background: var(--accent); border-color: var(--accent); color: white; font-weight: 500; }
+
+  /* Main layout */
+  .audio-room {
+    display: grid;
+    grid-template-columns: 280px 1fr 300px;
+    overflow: hidden;
+  }
+
+  /* ── Left: Track List ── */
+  .track-list {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    height: 40px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 14px; gap: 8px; flex-shrink: 0;
+  }
+  .panel-title {
+    font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  .panel-header-action {
+    margin-left: auto;
+    width: 20px; height: 20px; border-radius: 4px;
+    background: none; border: 1px solid var(--border);
+    color: var(--text-muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; line-height: 1;
+    transition: all 0.1s;
+  }
+  .panel-header-action:hover { border-color: var(--border-strong); color: var(--text-primary); }
+
+  .track-list-body { flex: 1; overflow-y: auto; }
+  .track-list-body::-webkit-scrollbar { width: 4px; }
+  .track-list-body::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 2px; }
+
+  .audio-track {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s;
+  }
+  .audio-track:hover { background: rgba(255,255,255,0.02); }
+  .audio-track.active { background: var(--accent-dim); }
+
+  .track-top {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px 6px;
+  }
+  .track-color-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .track-track-name { font-size: 12px; font-weight: 600; color: var(--text-primary); flex: 1; }
+  .track-badge {
+    font-size: 9px; padding: 1px 5px; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .track-badge.voice { background: var(--accent-dim); color: var(--text-accent); }
+  .track-badge.music { background: rgba(20,184,166,0.15); color: var(--teal); }
+  .track-badge.sfx { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .track-badge.ambience { background: rgba(34,197,94,0.1); color: var(--green); }
+
+  .track-mini-wave {
+    padding: 0 12px 6px;
+    height: 30px; display: flex; align-items: center;
+  }
+  .mini-wave-bars {
+    display: flex; align-items: center; gap: 1px; width: 100%; height: 22px;
+  }
+  .mini-wave-bar { flex-shrink: 0; width: 2px; border-radius: 1px; }
+
+  .track-controls {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 12px 10px;
+  }
+  .tc-btn {
+    width: 22px; height: 22px; border-radius: 4px;
+    background: none; border: 1px solid var(--border);
+    color: var(--text-muted); cursor: pointer; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.1s;
+  }
+  .tc-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .tc-btn.active { background: var(--accent-dim); border-color: rgba(99,102,241,0.3); color: var(--text-accent); }
+  .tc-btn.muted { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+
+  .vol-mini {
+    flex: 1; height: 3px; background: var(--bg-elevated); border-radius: 2px; position: relative;
+  }
+  .vol-fill { height: 100%; border-radius: 2px; }
+  .vol-thumb {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: white; border: 1.5px solid var(--accent);
+    cursor: ew-resize;
+  }
+  .vol-pct { font-size: 9px; color: var(--text-muted); font-family: 'SF Mono', monospace; width: 26px; text-align: right; }
+
+  /* ── Center: EQ + Effects ── */
+  .eq-panel {
+    background: var(--bg-base);
+    display: flex; flex-direction: column;
+    overflow: hidden; border-right: 1px solid var(--border);
+  }
+
+  .eq-toolbar {
+    height: 40px; background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 8px; flex-shrink: 0;
+  }
+  .eq-mode-pill {
+    display: flex; background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: 5px; padding: 2px;
+  }
+  .eq-mode-opt {
+    padding: 3px 10px; border-radius: 3px;
+    font-size: 10px; color: var(--text-muted); cursor: pointer; transition: all 0.1s;
+  }
+  .eq-mode-opt.active { background: var(--bg-elevated); color: var(--text-primary); }
+  .ai-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+    border: 1px solid rgba(99,102,241,0.3); border-radius: 4px;
+    padding: 2px 8px; font-size: 10px; color: var(--accent-bright); cursor: pointer;
+  }
+  .ai-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-bright); box-shadow: 0 0 4px var(--accent); }
+
+  .eq-content {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .eq-content::-webkit-scrollbar { width: 5px; }
+  .eq-content::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
+
+  /* Waveform display */
+  .waveform-display {
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .waveform-header {
+    height: 32px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 12px; gap: 8px;
+  }
+  .waveform-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+  .waveform-track-name { font-size: 11px; color: var(--text-primary); }
+  .waveform-badge {
+    margin-left: auto; font-size: 9px; padding: 1px 5px; border-radius: 3px;
+    background: var(--accent-dim); color: var(--text-accent);
+  }
+  .waveform-canvas {
+    height: 80px; padding: 10px 14px;
+    display: flex; align-items: center;
+    background: radial-gradient(ellipse at center, rgba(99,102,241,0.04) 0%, transparent 70%);
+    position: relative;
+  }
+  .waveform-bars-full {
+    display: flex; align-items: center; gap: 1px; width: 100%; height: 60px;
+  }
+  .waveform-bar-full { flex: 1; border-radius: 1px; min-width: 2px; }
+  .playhead-wave {
+    position: absolute; top: 0; bottom: 0; width: 1.5px;
+    background: var(--accent); left: 30%;
+  }
+  .playhead-wave::before {
+    content: ''; position: absolute; top: 8px; left: -3px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 6px var(--accent);
+  }
+
+  /* EQ Curve Display */
+  .eq-curve-panel {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden;
+  }
+  .eq-curve-header {
+    height: 32px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 12px; gap: 8px;
+  }
+  .eq-curve-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+  .eq-reset-btn {
+    margin-left: auto; font-size: 10px; color: var(--text-muted);
+    cursor: pointer; transition: color 0.1s;
+  }
+  .eq-reset-btn:hover { color: var(--text-primary); }
+
+  .eq-curve-canvas {
+    height: 140px; position: relative;
+    background: linear-gradient(180deg, rgba(99,102,241,0.03) 0%, transparent 100%);
+  }
+  .eq-grid {
+    position: absolute; inset: 0;
+    display: grid; grid-template-rows: repeat(5, 1fr);
+    pointer-events: none;
+  }
+  .eq-grid-line { border-top: 1px solid rgba(255,255,255,0.04); }
+  .eq-freq-labels {
+    position: absolute; bottom: 4px; left: 0; right: 0;
+    display: flex; justify-content: space-around;
+    padding: 0 10px;
+  }
+  .eq-freq-label { font-size: 9px; color: var(--text-muted); }
+  .eq-zero-line {
+    position: absolute; left: 0; right: 0;
+    height: 1px; background: rgba(255,255,255,0.08); top: 50%;
+  }
+
+  /* SVG EQ curve */
+  .eq-svg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+  }
+
+  /* EQ nodes */
+  .eq-node {
+    position: absolute; width: 14px; height: 14px;
+    border-radius: 50%; border: 2px solid;
+    transform: translate(-50%, -50%);
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .eq-node:hover { transform: translate(-50%, -50%) scale(1.3); }
+  .eq-node.highpass { background: rgba(99,102,241,0.2); border-color: var(--accent); top: 65%; left: 8%; }
+  .eq-node.low-shelf { background: rgba(20,184,166,0.2); border-color: var(--teal); top: 40%; left: 20%; }
+  .eq-node.mid-bell { background: rgba(99,102,241,0.2); border-color: var(--accent); top: 28%; left: 48%; }
+  .eq-node.high-shelf { background: rgba(245,158,11,0.2); border-color: var(--amber); top: 38%; left: 78%; }
+  .eq-node.lowpass { background: rgba(239,68,68,0.15); border-color: var(--red); top: 62%; left: 93%; }
+
+  /* Effects Chain */
+  .effects-chain {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden;
+  }
+  .effects-header {
+    height: 32px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 12px; gap: 8px;
+  }
+  .effects-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+
+  .effect-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s;
+  }
+  .effect-item:last-child { border-bottom: none; }
+  .effect-item:hover { background: rgba(255,255,255,0.02); }
+
+  .effect-toggle {
+    width: 26px; height: 14px; border-radius: 7px;
+    border: 1px solid var(--border); flex-shrink: 0; position: relative;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .effect-toggle.on {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .effect-toggle-thumb {
+    position: absolute; top: 1px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: white; transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .effect-toggle.off .effect-toggle-thumb { left: 1px; }
+  .effect-toggle.on .effect-toggle-thumb { left: 13px; }
+
+  .effect-info { flex: 1; }
+  .effect-name { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+  .effect-desc { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .effect-value {
+    font-size: 11px; color: var(--text-secondary);
+    font-family: 'SF Mono', monospace; text-align: right;
+  }
+  .effect-ai {
+    font-size: 9px; padding: 1px 5px; border-radius: 3px;
+    background: var(--accent-dim); color: var(--text-accent);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+
+  /* ── Right: Meters + Platform ── */
+  .meters-panel {
+    background: var(--bg-panel);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .level-meters {
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .meters-title { font-size: 10px; font-weight: 600; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+
+  .meter-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 6px; }
+  .meter-label { font-size: 10px; color: var(--text-secondary); width: 24px; text-align: right; }
+  .meter-bar-v {
+    flex: 1; height: 120px; background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: 3px;
+    display: flex; flex-direction: column-reverse; overflow: hidden;
+    position: relative;
+  }
+  .meter-fill {
+    width: 100%; border-radius: 2px;
+    background: linear-gradient(180deg, var(--red) 0%, var(--amber) 20%, var(--green) 60%, rgba(34,197,94,0.4) 100%);
+    transition: height 0.1s;
+  }
+  .meter-lufs {
+    font-size: 10px; font-family: 'SF Mono', monospace;
+    color: var(--text-secondary); text-align: center;
+    margin-top: 4px;
+  }
+  .meter-target {
+    position: absolute; left: 0; right: 0; height: 1px;
+    background: rgba(245,158,11,0.5);
+  }
+
+  /* LUFS readout */
+  .lufs-readout {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lufs-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .lufs-item {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 10px; text-align: center;
+  }
+  .lufs-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .lufs-value {
+    font-size: 18px; font-weight: 700; font-family: 'SF Mono', monospace;
+    letter-spacing: -0.5px;
+  }
+  .lufs-value.ok { color: var(--green); }
+  .lufs-value.warn { color: var(--amber); }
+  .lufs-value.bad { color: var(--red); }
+  .lufs-target { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Platform targets */
+  .platform-targets {
+    flex: 1; overflow-y: auto; padding: 14px;
+  }
+  .platform-targets::-webkit-scrollbar { width: 4px; }
+  .platform-targets::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 2px; }
+  .platform-section-title { font-size: 10px; font-weight: 600; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+
+  .platform-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 6px;
+    border: 1px solid var(--border); margin-bottom: 6px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .platform-item:hover { border-color: var(--border-strong); }
+  .platform-item.active { border-color: rgba(99,102,241,0.3); background: var(--accent-dim); }
+  .platform-logo {
+    width: 22px; height: 22px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+  }
+  .platform-name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+  .platform-spec { font-size: 9px; color: var(--text-muted); }
+  .platform-status {
+    margin-left: auto; display: flex; align-items: center; gap: 4px;
+    font-size: 10px;
+  }
+  .platform-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .platform-dot.ok { background: var(--green); }
+  .platform-dot.warn { background: var(--amber); }
+  .platform-dot.bad { background: var(--red); }
+
+  .normalize-btn {
+    width: 100%; height: 32px; border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    border: none; color: white; font-size: 12px; font-weight: 600;
+    cursor: pointer; margin-top: 10px; display: flex; align-items: center;
+    justify-content: center; gap: 6px; transition: opacity 0.15s;
+  }
+  .normalize-btn:hover { opacity: 0.9; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="traffic-lights">
+      <div class="tl tl-red"></div>
+      <div class="tl tl-yellow"></div>
+      <div class="tl tl-green"></div>
+    </div>
+    <div class="app-logo"><div class="logo-dot"></div> Vivido</div>
+    <div class="view-tabs">
+      <div class="vtab">Editor</div>
+      <div class="vtab">Transcript</div>
+      <div class="vtab active">Audio Room</div>
+      <div class="vtab">Publish</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-btn">◀ Back to Timeline</div>
+      <div class="tb-btn">Preview Output</div>
+      <div class="tb-btn primary">Apply & Return</div>
+    </div>
+  </div>
+
+  <!-- Audio Room Body -->
+  <div class="audio-room">
+
+    <!-- Left: Track List -->
+    <div class="track-list">
+      <div class="panel-header">
+        <span class="panel-title">Tracks</span>
+        <button class="panel-header-action">+</button>
+      </div>
+      <div class="track-list-body">
+
+        <!-- Voice track (active) -->
+        <div class="audio-track active">
+          <div class="track-top">
+            <div class="track-color-dot" style="background: var(--accent);"></div>
+            <span class="track-track-name">Primary Voice</span>
+            <span class="track-badge voice">Voice</span>
+          </div>
+          <div class="track-mini-wave">
+            <div class="mini-wave-bars" id="wave1"></div>
+          </div>
+          <div class="track-controls">
+            <button class="tc-btn active" title="Solo">S</button>
+            <button class="tc-btn" title="Mute">M</button>
+            <div class="vol-mini">
+              <div class="vol-fill" style="width: 78%; background: linear-gradient(90deg, var(--accent), var(--accent-bright));"></div>
+              <div class="vol-thumb" style="left: calc(78% - 4px);"></div>
+            </div>
+            <span class="vol-pct">78%</span>
+          </div>
+        </div>
+
+        <!-- Music track -->
+        <div class="audio-track">
+          <div class="track-top">
+            <div class="track-color-dot" style="background: var(--teal);"></div>
+            <span class="track-track-name">Background Music</span>
+            <span class="track-badge music">Music</span>
+          </div>
+          <div class="track-mini-wave">
+            <div class="mini-wave-bars" id="wave2"></div>
+          </div>
+          <div class="track-controls">
+            <button class="tc-btn" title="Solo">S</button>
+            <button class="tc-btn" title="Mute">M</button>
+            <div class="vol-mini">
+              <div class="vol-fill" style="width: 22%; background: linear-gradient(90deg, var(--teal), #0fb8ac);"></div>
+              <div class="vol-thumb" style="left: calc(22% - 4px);"></div>
+            </div>
+            <span class="vol-pct">22%</span>
+          </div>
+        </div>
+
+        <!-- SFX track -->
+        <div class="audio-track">
+          <div class="track-top">
+            <div class="track-color-dot" style="background: var(--amber);"></div>
+            <span class="track-track-name">Sound FX</span>
+            <span class="track-badge sfx">SFX</span>
+          </div>
+          <div class="track-mini-wave">
+            <div class="mini-wave-bars" id="wave3"></div>
+          </div>
+          <div class="track-controls">
+            <button class="tc-btn" title="Solo">S</button>
+            <button class="tc-btn muted" title="Muted">M</button>
+            <div class="vol-mini">
+              <div class="vol-fill" style="width: 60%; background: linear-gradient(90deg, var(--amber), #fbbf24); opacity: 0.4;"></div>
+              <div class="vol-thumb" style="left: calc(60% - 4px); opacity: 0.4;"></div>
+            </div>
+            <span class="vol-pct" style="opacity: 0.4;">60%</span>
+          </div>
+        </div>
+
+        <!-- Ambience track -->
+        <div class="audio-track">
+          <div class="track-top">
+            <div class="track-color-dot" style="background: var(--green);"></div>
+            <span class="track-track-name">Room Tone</span>
+            <span class="track-badge ambience">Ambience</span>
+          </div>
+          <div class="track-mini-wave">
+            <div class="mini-wave-bars" id="wave4"></div>
+          </div>
+          <div class="track-controls">
+            <button class="tc-btn" title="Solo">S</button>
+            <button class="tc-btn" title="Mute">M</button>
+            <div class="vol-mini">
+              <div class="vol-fill" style="width: 35%; background: linear-gradient(90deg, var(--green), #4ade80);"></div>
+              <div class="vol-thumb" style="left: calc(35% - 4px);"></div>
+            </div>
+            <span class="vol-pct">35%</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Center: EQ + Effects -->
+    <div class="eq-panel">
+      <div class="eq-toolbar">
+        <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">Primary Voice</span>
+        <div class="eq-mode-pill">
+          <div class="eq-mode-opt active">Parametric EQ</div>
+          <div class="eq-mode-opt">Graphic</div>
+          <div class="eq-mode-opt">Linear</div>
+        </div>
+        <div class="ai-badge">
+          <div class="ai-dot"></div>
+          AI Enhance
+        </div>
+        <div style="margin-left: auto; font-size: 11px; color: var(--text-muted);">A/B Compare</div>
+      </div>
+
+      <div class="eq-content">
+
+        <!-- Waveform -->
+        <div class="waveform-display">
+          <div class="waveform-header">
+            <span class="waveform-title">Waveform</span>
+            <span class="waveform-track-name">primary_voice.wav</span>
+            <span class="waveform-badge">48kHz · WAV</span>
+          </div>
+          <div class="waveform-canvas">
+            <div class="waveform-bars-full" id="mainwave"></div>
+            <div class="playhead-wave"></div>
+          </div>
+        </div>
+
+        <!-- EQ Curve -->
+        <div class="eq-curve-panel">
+          <div class="eq-curve-header">
+            <span class="eq-curve-title">EQ Curve</span>
+            <span class="eq-reset-btn">Reset</span>
+          </div>
+          <div class="eq-curve-canvas">
+            <div class="eq-grid">
+              <div class="eq-grid-line"></div>
+              <div class="eq-grid-line"></div>
+              <div class="eq-grid-line"></div>
+              <div class="eq-grid-line"></div>
+              <div class="eq-grid-line"></div>
+            </div>
+            <div class="eq-zero-line"></div>
+            <svg class="eq-svg" viewBox="0 0 800 140" preserveAspectRatio="none">
+              <!-- EQ curve shape -->
+              <defs>
+                <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(99,102,241,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(99,102,241,0)"/>
+                </linearGradient>
+              </defs>
+              <!-- Filled area under curve -->
+              <path d="M0,90 C50,90 80,95 120,85 C160,75 180,60 240,54 C300,48 340,46 380,40 C420,34 440,50 480,52 C530,55 560,50 600,46 C640,42 680,55 720,78 C750,92 770,95 800,95 L800,140 L0,140 Z"
+                fill="url(#eqGrad)" opacity="0.5"/>
+              <!-- Curve line -->
+              <path d="M0,90 C50,90 80,95 120,85 C160,75 180,60 240,54 C300,48 340,46 380,40 C420,34 440,50 480,52 C530,55 560,50 600,46 C640,42 680,55 720,78 C750,92 770,95 800,95"
+                fill="none" stroke="rgba(99,102,241,0.8)" stroke-width="2"/>
+            </svg>
+            <!-- EQ nodes -->
+            <div class="eq-node highpass"></div>
+            <div class="eq-node low-shelf"></div>
+            <div class="eq-node mid-bell"></div>
+            <div class="eq-node high-shelf"></div>
+            <div class="eq-node lowpass"></div>
+            <!-- Freq labels -->
+            <div class="eq-freq-labels">
+              <span class="eq-freq-label">20</span>
+              <span class="eq-freq-label">50</span>
+              <span class="eq-freq-label">100</span>
+              <span class="eq-freq-label">200</span>
+              <span class="eq-freq-label">500</span>
+              <span class="eq-freq-label">1k</span>
+              <span class="eq-freq-label">2k</span>
+              <span class="eq-freq-label">5k</span>
+              <span class="eq-freq-label">10k</span>
+              <span class="eq-freq-label">20k</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Effects Chain -->
+        <div class="effects-chain">
+          <div class="effects-header">
+            <span class="effects-title">Effects Chain</span>
+            <button class="panel-header-action" style="margin-left: auto; font-size: 12px;">+</button>
+          </div>
+
+          <div class="effect-item">
+            <div class="effect-toggle on"><div class="effect-toggle-thumb"></div></div>
+            <div class="effect-info">
+              <div class="effect-name">Noise Removal</div>
+              <div class="effect-desc">AI background noise reduction</div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
+              <div class="effect-value">−18 dB</div>
+              <div class="effect-ai">AI</div>
+            </div>
+          </div>
+
+          <div class="effect-item">
+            <div class="effect-toggle on"><div class="effect-toggle-thumb"></div></div>
+            <div class="effect-info">
+              <div class="effect-name">De-Esser</div>
+              <div class="effect-desc">Tame harsh sibilance</div>
+            </div>
+            <div class="effect-value">7kHz · −4dB</div>
+          </div>
+
+          <div class="effect-item">
+            <div class="effect-toggle on"><div class="effect-toggle-thumb"></div></div>
+            <div class="effect-info">
+              <div class="effect-name">Compression</div>
+              <div class="effect-desc">3:1 ratio · −18 dBFS threshold</div>
+            </div>
+            <div class="effect-value">−3.2 dB GR</div>
+          </div>
+
+          <div class="effect-item">
+            <div class="effect-toggle on"><div class="effect-toggle-thumb"></div></div>
+            <div class="effect-info">
+              <div class="effect-name">LUFS Normalizer</div>
+              <div class="effect-desc">Platform-matched loudness</div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
+              <div class="effect-value">−14 LUFS</div>
+              <div class="effect-ai">AI</div>
+            </div>
+          </div>
+
+          <div class="effect-item" style="opacity: 0.5;">
+            <div class="effect-toggle off"><div class="effect-toggle-thumb"></div></div>
+            <div class="effect-info">
+              <div class="effect-name">Reverb</div>
+              <div class="effect-desc">Room simulation · Off</div>
+            </div>
+            <div class="effect-value">—</div>
+          </div>
+
+        </div>
+
+      </div><!-- eq-content -->
+    </div>
+
+    <!-- Right: Meters + Platforms -->
+    <div class="meters-panel">
+      <div class="panel-header">
+        <span class="panel-title" style="font-size: 10px;">Output Meters</span>
+      </div>
+
+      <div class="level-meters">
+        <div class="meters-title">Peak Level</div>
+        <div class="meter-row">
+          <span class="meter-label" style="font-size: 9px; color: var(--text-muted);">L</span>
+          <div class="meter-bar-v">
+            <div class="meter-fill" style="height: 72%;"></div>
+            <div class="meter-target" style="bottom: 85%;"></div>
+          </div>
+          <div class="meter-bar-v">
+            <div class="meter-fill" style="height: 68%;"></div>
+            <div class="meter-target" style="bottom: 85%;"></div>
+          </div>
+          <span class="meter-label" style="font-size: 9px; color: var(--text-muted);">R</span>
+        </div>
+      </div>
+
+      <div class="lufs-readout">
+        <div class="lufs-grid">
+          <div class="lufs-item">
+            <div class="lufs-label">Integrated</div>
+            <div class="lufs-value ok">−14.2</div>
+            <div class="lufs-target">Target: −14</div>
+          </div>
+          <div class="lufs-item">
+            <div class="lufs-label">True Peak</div>
+            <div class="lufs-value ok">−1.8</div>
+            <div class="lufs-target">Max: −1.0</div>
+          </div>
+          <div class="lufs-item">
+            <div class="lufs-label">Short Term</div>
+            <div class="lufs-value warn">−11.8</div>
+            <div class="lufs-target">Watch: −12</div>
+          </div>
+          <div class="lufs-item">
+            <div class="lufs-label">LRA</div>
+            <div class="lufs-value ok">6.4</div>
+            <div class="lufs-target">LU range</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="platform-targets">
+        <div class="platform-section-title">Platform Targets</div>
+
+        <div class="platform-item active">
+          <div class="platform-logo" style="background: rgba(239,68,68,0.15); font-size: 14px;">▶</div>
+          <div>
+            <div class="platform-name">YouTube</div>
+            <div class="platform-spec">−14 LUFS · −1 dBTP</div>
+          </div>
+          <div class="platform-status">
+            <div class="platform-dot ok"></div>
+            <span style="color: var(--green); font-size: 10px;">Pass</span>
+          </div>
+        </div>
+
+        <div class="platform-item">
+          <div class="platform-logo" style="background: rgba(99,102,241,0.15); font-size: 14px;">▶</div>
+          <div>
+            <div class="platform-name">Podcast / Spotify</div>
+            <div class="platform-spec">−16 LUFS · −1 dBTP</div>
+          </div>
+          <div class="platform-status">
+            <div class="platform-dot warn"></div>
+            <span style="color: var(--amber); font-size: 10px;">+2 LU</span>
+          </div>
+        </div>
+
+        <div class="platform-item">
+          <div class="platform-logo" style="background: rgba(20,184,166,0.12); font-size: 14px;">▶</div>
+          <div>
+            <div class="platform-name">Instagram / TikTok</div>
+            <div class="platform-spec">−14 LUFS · −1 dBTP</div>
+          </div>
+          <div class="platform-status">
+            <div class="platform-dot ok"></div>
+            <span style="color: var(--green); font-size: 10px;">Pass</span>
+          </div>
+        </div>
+
+        <div class="platform-item">
+          <div class="platform-logo" style="background: rgba(245,158,11,0.12); font-size: 14px;">▶</div>
+          <div>
+            <div class="platform-name">Broadcast / TV</div>
+            <div class="platform-spec">−23 LUFS · −1 dBTP</div>
+          </div>
+          <div class="platform-status">
+            <div class="platform-dot bad"></div>
+            <span style="color: var(--red); font-size: 10px;">−9 LU</span>
+          </div>
+        </div>
+
+        <button class="normalize-btn">
+          ✦ Auto-Normalize for All Platforms
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function makeWave(id, color, dense) {
+    const c = document.getElementById(id);
+    if (!c) return;
+    const count = dense ? 120 : 60;
+    for (let i = 0; i < count; i++) {
+      const b = document.createElement('div');
+      b.className = 'mini-wave-bar';
+      const h = 15 + Math.random() * 85;
+      b.style.height = h + '%';
+      b.style.background = color;
+      b.style.opacity = 0.3 + (h / 100) * 0.6;
+      c.appendChild(b);
+    }
+  }
+  makeWave('wave1', 'var(--accent-bright)', true);
+  makeWave('wave2', 'var(--teal)', false);
+  makeWave('wave3', 'var(--amber)', false);
+  makeWave('wave4', 'var(--green)', false);
+
+  // Main waveform
+  const mw = document.getElementById('mainwave');
+  if (mw) {
+    for (let i = 0; i < 200; i++) {
+      const b = document.createElement('div');
+      b.className = 'waveform-bar-full';
+      const h = 5 + Math.random() * 95;
+      b.style.height = h + '%';
+      b.style.background = `rgba(99,102,241,${0.2 + (h/100)*0.6})`;
+      mw.appendChild(b);
+    }
+  }
+</script>
+</body>
+</html>

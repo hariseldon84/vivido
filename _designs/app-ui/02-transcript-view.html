@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vivido — Transcript Editor</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-base: #0e0e10;
+    --bg-panel: #141416;
+    --bg-surface: #1a1a1e;
+    --bg-elevated: #222226;
+    --bg-hover: #2a2a30;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.12);
+    --accent: #6366f1;
+    --accent-dim: rgba(99,102,241,0.15);
+    --accent-bright: #818cf8;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --green: #22c55e;
+    --teal: #14b8a6;
+    --text-primary: #f0f0f4;
+    --text-secondary: #8b8b9a;
+    --text-muted: #4a4a58;
+    --text-accent: #818cf8;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+    font-size: 12px; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: grid;
+    grid-template-rows: 36px 1fr;
+    grid-template-columns: 1fr 400px;
+    height: 100vh;
+  }
+
+  /* Title Bar */
+  .titlebar {
+    grid-column: 1 / -1;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 12px; gap: 8px;
+    user-select: none;
+  }
+  .traffic-lights { display: flex; gap: 6px; margin-right: 8px; }
+  .tl { width: 12px; height: 12px; border-radius: 50%; }
+  .tl-red { background: #ff5f57; }
+  .tl-yellow { background: #febc2e; }
+  .tl-green { background: #28c840; }
+  .app-logo {
+    font-size: 13px; font-weight: 700; letter-spacing: -0.3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .logo-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 8px var(--accent);
+  }
+  .view-tabs {
+    display: flex; gap: 2px; margin-left: 20px;
+    background: var(--bg-surface); border-radius: 6px; padding: 2px;
+    border: 1px solid var(--border);
+  }
+  .vtab {
+    padding: 3px 12px; border-radius: 4px;
+    font-size: 11px; color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .vtab.active {
+    background: var(--bg-elevated); color: var(--text-primary);
+  }
+  .vtab:hover:not(.active) { color: var(--text-secondary); }
+  .tb-right {
+    margin-left: auto; display: flex; align-items: center; gap: 6px;
+  }
+  .tb-btn {
+    height: 24px; padding: 0 10px;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 5px; color: var(--text-secondary);
+    font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+    transition: all 0.15s;
+  }
+  .tb-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .tb-btn.primary { background: var(--accent); border-color: var(--accent); color: white; font-weight: 500; }
+  .tb-btn.primary:hover { background: var(--accent-bright); }
+  .timecode {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+    letter-spacing: 1px; background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 3px 10px;
+  }
+
+  /* Main Transcript Panel */
+  .transcript-main {
+    background: var(--bg-base);
+    display: flex; flex-direction: column;
+    overflow: hidden; border-right: 1px solid var(--border);
+  }
+
+  .transcript-toolbar {
+    height: 40px; background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 8px; flex-shrink: 0;
+  }
+  .search-field {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 5px; padding: 0 10px;
+    height: 26px; flex: 1; max-width: 260px;
+  }
+  .search-field input {
+    background: none; border: none; outline: none;
+    color: var(--text-primary); font-size: 11px; flex: 1;
+  }
+  .search-field input::placeholder { color: var(--text-muted); }
+  .search-field-icon { font-size: 11px; color: var(--text-muted); }
+
+  .toolbar-sep {
+    width: 1px; height: 20px; background: var(--border); flex-shrink: 0;
+  }
+
+  .filter-chip {
+    height: 22px; padding: 0 9px;
+    border-radius: 11px; font-size: 10px;
+    border: 1px solid var(--border);
+    color: var(--text-muted); cursor: pointer;
+    display: flex; align-items: center; gap: 4px;
+    transition: all 0.15s;
+  }
+  .filter-chip:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+  .filter-chip.active {
+    background: var(--accent-dim); border-color: rgba(99,102,241,0.35);
+    color: var(--text-accent);
+  }
+
+  .toolbar-right { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+  .ai-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 4px; padding: 2px 8px;
+    font-size: 10px; color: var(--accent-bright); font-weight: 500;
+    cursor: pointer;
+  }
+  .ai-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-bright); box-shadow: 0 0 4px var(--accent); }
+
+  /* Transcript Scroll Area */
+  .transcript-scroll {
+    flex: 1; overflow-y: auto; padding: 24px 40px;
+    background: var(--bg-base);
+  }
+  .transcript-scroll::-webkit-scrollbar { width: 5px; }
+  .transcript-scroll::-webkit-scrollbar-track { background: transparent; }
+  .transcript-scroll::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
+
+  /* Speaker block */
+  .speaker-block {
+    margin-bottom: 28px;
+  }
+  .speaker-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .speaker-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+    letter-spacing: 0.2px;
+  }
+  .speaker-avatar.main { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; }
+  .speaker-avatar.guest { background: linear-gradient(135deg, #0891b2, #0e7490); color: white; }
+  .speaker-name {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+  }
+  .speaker-time {
+    font-size: 10px; color: var(--text-muted);
+    font-family: 'SF Mono', monospace; margin-left: 4px;
+  }
+  .speaker-label {
+    font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 3px; margin-left: 4px;
+  }
+  .speaker-label.host { background: rgba(99,102,241,0.15); color: var(--accent-bright); }
+  .speaker-label.auto { background: rgba(20,184,166,0.15); color: var(--teal); }
+
+  /* Transcript words */
+  .transcript-para {
+    font-size: 15px; line-height: 1.75;
+    color: var(--text-primary); font-weight: 400;
+    max-width: 700px;
+  }
+
+  .word {
+    cursor: pointer; border-radius: 2px;
+    padding: 1px 0; transition: background 0.1s; position: relative;
+  }
+  .word:hover { background: rgba(255,255,255,0.06); }
+  .word.playing {
+    background: rgba(99,102,241,0.25);
+    border-bottom: 1.5px solid var(--accent);
+    color: white;
+  }
+  .word.selected {
+    background: rgba(99,102,241,0.2);
+  }
+  .word.filler {
+    color: var(--text-muted); text-decoration: line-through;
+    opacity: 0.5;
+  }
+  .word.filler-marked {
+    background: rgba(239,68,68,0.1); color: #fca5a5;
+    text-decoration: line-through;
+  }
+  .word.silence {
+    color: var(--text-muted); font-style: italic;
+    font-size: 11px; vertical-align: middle;
+    background: rgba(255,255,255,0.03); border-radius: 3px;
+    padding: 1px 4px; margin: 0 2px;
+  }
+
+  /* Annotation markers */
+  .chapter-marker {
+    display: flex; align-items: center; gap: 8px;
+    margin: 20px 0 12px;
+    padding: 8px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+  }
+  .chapter-icon { font-size: 12px; }
+  .chapter-title {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+  }
+  .chapter-ts {
+    font-size: 10px; color: var(--text-muted);
+    font-family: 'SF Mono', monospace; margin-left: auto;
+  }
+  .chapter-badge {
+    font-size: 9px; background: var(--accent-dim);
+    color: var(--text-accent); border-radius: 3px; padding: 1px 5px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+
+  .short-marker {
+    display: flex; align-items: center; gap: 8px;
+    margin: 16px 0 10px;
+    padding: 6px 10px;
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+  }
+  .short-badge {
+    font-size: 9px; background: rgba(245,158,11,0.15);
+    color: var(--amber); border-radius: 3px; padding: 1px 5px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .short-title { font-size: 11px; color: var(--text-secondary); }
+  .short-ts { font-size: 10px; color: var(--text-muted); font-family: 'SF Mono', monospace; margin-left: auto; }
+
+  /* Context menu peek */
+  .word-tooltip {
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-elevated); border: 1px solid var(--border-strong);
+    border-radius: 5px; padding: 4px 0; z-index: 100;
+    white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    pointer-events: none; opacity: 0; transition: opacity 0.1s;
+  }
+  .word:hover .word-tooltip { opacity: 1; }
+  .tooltip-item {
+    padding: 3px 10px; font-size: 10px; color: var(--text-secondary);
+    cursor: pointer; transition: background 0.1s;
+  }
+  .tooltip-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  /* Right Panel — AI Tools */
+  .ai-panel {
+    background: var(--bg-panel);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .ai-panel-header {
+    height: 40px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 14px; gap: 6px; flex-shrink: 0;
+  }
+  .ai-panel-title {
+    font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 0.3px; display: flex; align-items: center; gap: 6px;
+  }
+  .ai-orb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    box-shadow: 0 0 8px rgba(99,102,241,0.4);
+    flex-shrink: 0;
+  }
+  .panel-tab-row {
+    margin-left: auto; display: flex; gap: 2px;
+  }
+  .ptab {
+    padding: 3px 8px; border-radius: 4px;
+    font-size: 10px; color: var(--text-muted); cursor: pointer;
+    transition: all 0.1s;
+  }
+  .ptab.active { background: var(--accent-dim); color: var(--text-accent); }
+
+  .ai-panel-body {
+    flex: 1; overflow-y: auto; padding: 14px;
+  }
+  .ai-panel-body::-webkit-scrollbar { width: 4px; }
+  .ai-panel-body::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 2px; }
+
+  /* AI Suggestions */
+  .ai-section {
+    margin-bottom: 16px;
+  }
+  .ai-section-title {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.7px;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .ai-card {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+    margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
+  }
+  .ai-card:hover { border-color: var(--border-strong); background: var(--bg-elevated); }
+  .ai-card.highlight {
+    border-color: rgba(99,102,241,0.3);
+    background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(124,58,237,0.05) 100%);
+  }
+  .ai-card-header {
+    display: flex; align-items: center; gap: 7px; margin-bottom: 5px;
+  }
+  .ai-card-icon {
+    font-size: 13px; flex-shrink: 0;
+  }
+  .ai-card-title {
+    font-size: 11px; font-weight: 600; color: var(--text-primary);
+  }
+  .ai-card-badge {
+    margin-left: auto; font-size: 9px; padding: 1px 5px;
+    border-radius: 3px; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .ai-card-badge.new { background: var(--accent-dim); color: var(--text-accent); }
+  .ai-card-badge.auto { background: rgba(20,184,166,0.15); color: var(--teal); }
+  .ai-card-badge.warn { background: rgba(239,68,68,0.1); color: #fca5a5; }
+  .ai-card-body {
+    font-size: 11px; color: var(--text-secondary); line-height: 1.5;
+  }
+  .ai-card-body strong { color: var(--text-primary); }
+  .ai-card-actions {
+    display: flex; gap: 5px; margin-top: 8px;
+  }
+  .card-btn {
+    height: 22px; padding: 0 9px; border-radius: 4px;
+    font-size: 10px; cursor: pointer; display: flex; align-items: center; gap: 3px;
+    transition: all 0.1s;
+  }
+  .card-btn.apply {
+    background: var(--accent); border: 1px solid var(--accent); color: white;
+  }
+  .card-btn.apply:hover { background: var(--accent-bright); }
+  .card-btn.dismiss {
+    background: none; border: 1px solid var(--border); color: var(--text-muted);
+  }
+  .card-btn.dismiss:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+
+  /* Filler word stats */
+  .stat-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-secondary); flex: 1; }
+  .stat-bar {
+    flex: 2; height: 4px; background: var(--bg-elevated); border-radius: 2px;
+  }
+  .stat-fill { height: 100%; border-radius: 2px; }
+  .stat-fill.red { background: var(--red); }
+  .stat-fill.amber { background: var(--amber); }
+  .stat-fill.green { background: var(--green); }
+  .stat-count {
+    font-size: 10px; color: var(--text-muted);
+    font-family: 'SF Mono', monospace; width: 26px; text-align: right;
+  }
+
+  /* Chapters list */
+  .chapter-list-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 5px; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.1s; margin-bottom: 2px;
+  }
+  .chapter-list-item:hover { background: var(--bg-surface); border-color: var(--border); }
+  .chapter-list-item.active { background: var(--accent-dim); border-color: rgba(99,102,241,0.2); }
+  .chapter-num {
+    font-size: 10px; color: var(--text-muted);
+    font-family: 'SF Mono', monospace; width: 16px;
+  }
+  .chapter-list-title { font-size: 11px; color: var(--text-secondary); flex: 1; }
+  .chapter-list-item.active .chapter-list-title { color: var(--text-primary); }
+  .chapter-list-ts {
+    font-size: 10px; color: var(--text-muted); font-family: 'SF Mono', monospace;
+  }
+
+  /* Confidence bar at bottom */
+  .transcript-footer {
+    height: 28px; background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 12px; flex-shrink: 0;
+  }
+  .conf-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; color: var(--text-muted);
+  }
+  .conf-bar {
+    width: 60px; height: 3px; background: var(--bg-elevated); border-radius: 2px;
+  }
+  .conf-fill { height: 100%; border-radius: 2px; background: var(--green); }
+  .conf-pct { font-family: 'SF Mono', monospace; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="traffic-lights">
+      <div class="tl tl-red"></div>
+      <div class="tl tl-yellow"></div>
+      <div class="tl tl-green"></div>
+    </div>
+    <div class="app-logo">
+      <div class="logo-dot"></div>
+      Vivido
+    </div>
+    <div class="view-tabs">
+      <div class="vtab">Editor</div>
+      <div class="vtab active">Transcript</div>
+      <div class="vtab">Audio Room</div>
+      <div class="vtab">Publish</div>
+    </div>
+    <div class="tb-right">
+      <div class="timecode">00:02:34:12</div>
+      <div class="tb-btn">◀ Back to Timeline</div>
+      <div class="tb-btn primary">📦 Publish Package</div>
+    </div>
+  </div>
+
+  <!-- Main Transcript Area -->
+  <div class="transcript-main">
+    <div class="transcript-toolbar">
+      <div class="search-field">
+        <span class="search-field-icon">⌕</span>
+        <input type="text" placeholder="Search transcript...">
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="filter-chip active">Fillers</div>
+      <div class="filter-chip">Silences</div>
+      <div class="filter-chip">Chapters</div>
+      <div class="filter-chip">Shorts</div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-right">
+        <div class="ai-badge">
+          <div class="ai-dot"></div>
+          Auto-clean
+        </div>
+        <div class="tb-btn">Export SRT</div>
+      </div>
+    </div>
+
+    <div class="transcript-scroll">
+
+      <!-- Chapter 1 marker -->
+      <div class="chapter-marker">
+        <span class="chapter-icon">🎯</span>
+        <span class="chapter-title">Introduction</span>
+        <span class="chapter-badge">Chapter 1</span>
+        <span class="chapter-ts">00:00:00</span>
+      </div>
+
+      <!-- Speaker block 1 -->
+      <div class="speaker-block">
+        <div class="speaker-header">
+          <div class="speaker-avatar main">AN</div>
+          <span class="speaker-name">Anand</span>
+          <span class="speaker-time">0:00:02</span>
+          <span class="speaker-label host">Host</span>
+        </div>
+        <div class="transcript-para">
+          <span class="word">Hey</span>
+          <span class="word"> </span>
+          <span class="word">everyone,</span>
+          <span class="word"> </span>
+          <span class="word">welcome</span>
+          <span class="word"> </span>
+          <span class="word">back</span>
+          <span class="word"> </span>
+          <span class="word">to</span>
+          <span class="word"> </span>
+          <span class="word">the</span>
+          <span class="word"> </span>
+          <span class="word">channel.</span>
+          <span class="word filler-marked"> Um</span>
+          <span class="word"> </span>
+          <span class="word">today</span>
+          <span class="word"> </span>
+          <span class="word">we're</span>
+          <span class="word"> </span>
+          <span class="word">going</span>
+          <span class="word"> </span>
+          <span class="word">to</span>
+          <span class="word"> </span>
+          <span class="word">talk</span>
+          <span class="word"> </span>
+          <span class="word">about</span>
+          <span class="word"> </span>
+          <span class="word playing">something</span>
+          <span class="word"> </span>
+          <span class="word">really</span>
+          <span class="word"> </span>
+          <span class="word">exciting</span>
+          <span class="word"> </span>
+          <span class="word">—</span>
+          <span class="word"> </span>
+          <span class="word">the</span>
+          <span class="word"> </span>
+          <span class="word">future</span>
+          <span class="word"> </span>
+          <span class="word">of</span>
+          <span class="word"> </span>
+          <span class="word">video</span>
+          <span class="word"> </span>
+          <span class="word">creation.</span>
+          <span class="word filler-marked"> Uh,</span>
+          <span class="word"> </span>
+          <span class="word">and</span>
+          <span class="word filler-marked"> yeah,</span>
+          <span class="word"> </span>
+          <span class="word">I've</span>
+          <span class="word"> </span>
+          <span class="word">been</span>
+          <span class="word"> </span>
+          <span class="word">working</span>
+          <span class="word"> </span>
+          <span class="word">on</span>
+          <span class="word"> </span>
+          <span class="word">this</span>
+          <span class="word"> </span>
+          <span class="word">for</span>
+          <span class="word"> </span>
+          <span class="word">a</span>
+          <span class="word"> </span>
+          <span class="word">while</span>
+          <span class="word"> </span>
+          <span class="word">now</span>
+          <span class="word"> </span>
+          <span class="word">and</span>
+          <span class="word"> </span>
+          <span class="word">I</span>
+          <span class="word"> </span>
+          <span class="word">can't</span>
+          <span class="word"> </span>
+          <span class="word">wait</span>
+          <span class="word"> </span>
+          <span class="word">to</span>
+          <span class="word"> </span>
+          <span class="word">share</span>
+          <span class="word"> </span>
+          <span class="word">it.</span>
+        </div>
+      </div>
+
+      <!-- Short clip marker -->
+      <div class="short-marker">
+        <span class="short-badge">⚡ Short</span>
+        <span class="short-title">High-energy clip — 58 seconds · AI confidence 94%</span>
+        <span class="short-ts">0:00:18 → 0:01:16</span>
+      </div>
+
+      <!-- Speaker block 2 -->
+      <div class="speaker-block">
+        <div class="speaker-header">
+          <div class="speaker-avatar main">AN</div>
+          <span class="speaker-name">Anand</span>
+          <span class="speaker-time">0:00:28</span>
+        </div>
+        <div class="transcript-para">
+          <span class="word">So</span>
+          <span class="word"> </span>
+          <span class="word">the</span>
+          <span class="word"> </span>
+          <span class="word">problem</span>
+          <span class="word"> </span>
+          <span class="word">right</span>
+          <span class="word"> </span>
+          <span class="word">now</span>
+          <span class="word"> </span>
+          <span class="word">is</span>
+          <span class="word"> </span>
+          <span class="word">that</span>
+          <span class="word"> </span>
+          <span class="word">every</span>
+          <span class="word"> </span>
+          <span class="word">single</span>
+          <span class="word"> </span>
+          <span class="word">creator</span>
+          <span class="word"> </span>
+          <span class="word">I</span>
+          <span class="word"> </span>
+          <span class="word">know</span>
+          <span class="word"> </span>
+          <span class="word">is</span>
+          <span class="word"> </span>
+          <span class="word">using</span>
+          <span class="word"> </span>
+          <span class="word">four</span>
+          <span class="word"> </span>
+          <span class="word">or</span>
+          <span class="word"> </span>
+          <span class="word">five</span>
+          <span class="word"> </span>
+          <span class="word">different</span>
+          <span class="word"> </span>
+          <span class="word">tools</span>
+          <span class="word"> </span>
+          <span class="word">to</span>
+          <span class="word"> </span>
+          <span class="word">make</span>
+          <span class="word"> </span>
+          <span class="word">one</span>
+          <span class="word"> </span>
+          <span class="word selected">video.</span>
+          <span class="word silence"> [2.1s silence] </span>
+          <span class="word">Riverside</span>
+          <span class="word"> </span>
+          <span class="word">for</span>
+          <span class="word"> </span>
+          <span class="word">recording,</span>
+          <span class="word"> </span>
+          <span class="word">Final</span>
+          <span class="word"> </span>
+          <span class="word">Cut</span>
+          <span class="word"> </span>
+          <span class="word">for</span>
+          <span class="word"> </span>
+          <span class="word">editing,</span>
+          <span class="word"> </span>
+          <span class="word">Submagic</span>
+          <span class="word"> </span>
+          <span class="word">for</span>
+          <span class="word"> </span>
+          <span class="word">captions,</span>
+          <span class="word"> </span>
+          <span class="word">VidIQ</span>
+          <span class="word"> </span>
+          <span class="word">for</span>
+          <span class="word"> </span>
+          <span class="word">YouTube</span>
+          <span class="word"> </span>
+          <span class="word">optimization.</span>
+          <span class="word filler-marked"> Like,</span>
+          <span class="word"> </span>
+          <span class="word">that's</span>
+          <span class="word"> </span>
+          <span class="word">insane.</span>
+        </div>
+      </div>
+
+      <!-- Chapter 2 marker -->
+      <div class="chapter-marker" style="border-left-color: var(--teal);">
+        <span class="chapter-icon">🔑</span>
+        <span class="chapter-title">The Problem with Current Tools</span>
+        <span class="chapter-badge" style="background: rgba(20,184,166,0.15); color: var(--teal);">Chapter 2</span>
+        <span class="chapter-ts">00:01:12</span>
+      </div>
+
+      <!-- Speaker block 3 -->
+      <div class="speaker-block">
+        <div class="speaker-header">
+          <div class="speaker-avatar main">AN</div>
+          <span class="speaker-name">Anand</span>
+          <span class="speaker-time">0:01:14</span>
+        </div>
+        <div class="transcript-para">
+          <span class="word">What</span>
+          <span class="word"> </span>
+          <span class="word">I've</span>
+          <span class="word"> </span>
+          <span class="word">been</span>
+          <span class="word"> </span>
+          <span class="word">building</span>
+          <span class="word"> </span>
+          <span class="word">—</span>
+          <span class="word"> </span>
+          <span class="word">and</span>
+          <span class="word filler-marked"> honestly</span>
+          <span class="word"> </span>
+          <span class="word">it's</span>
+          <span class="word"> </span>
+          <span class="word">taken</span>
+          <span class="word"> </span>
+          <span class="word">about</span>
+          <span class="word"> </span>
+          <span class="word">two</span>
+          <span class="word"> </span>
+          <span class="word">years</span>
+          <span class="word"> </span>
+          <span class="word">to</span>
+          <span class="word"> </span>
+          <span class="word">figure</span>
+          <span class="word"> </span>
+          <span class="word">out</span>
+          <span class="word"> </span>
+          <span class="word">the</span>
+          <span class="word"> </span>
+          <span class="word">right</span>
+          <span class="word"> </span>
+          <span class="word">architecture</span>
+          <span class="word"> </span>
+          <span class="word">—</span>
+          <span class="word"> </span>
+          <span class="word">is</span>
+          <span class="word"> </span>
+          <span class="word">a</span>
+          <span class="word"> </span>
+          <span class="word">single</span>
+          <span class="word"> </span>
+          <span class="word">tool</span>
+          <span class="word"> </span>
+          <span class="word">that</span>
+          <span class="word"> </span>
+          <span class="word">knows</span>
+          <span class="word"> </span>
+          <span class="word">how</span>
+          <span class="word"> </span>
+          <span class="word">you</span>
+          <span class="word"> </span>
+          <span class="word">edit.</span>
+          <span class="word"> </span>
+          <span class="word">Not</span>
+          <span class="word"> </span>
+          <span class="word">just</span>
+          <span class="word"> </span>
+          <span class="word">a</span>
+          <span class="word"> </span>
+          <span class="word">generic</span>
+          <span class="word"> </span>
+          <span class="word">AI</span>
+          <span class="word"> </span>
+          <span class="word">—</span>
+          <span class="word"> </span>
+          <span class="word">an</span>
+          <span class="word"> </span>
+          <span class="word">AI</span>
+          <span class="word"> </span>
+          <span class="word">that</span>
+          <span class="word"> </span>
+          <span class="word">builds</span>
+          <span class="word"> </span>
+          <span class="word">up</span>
+          <span class="word"> </span>
+          <span class="word">your</span>
+          <span class="word"> </span>
+          <span class="word">style</span>
+          <span class="word"> </span>
+          <span class="word">over</span>
+          <span class="word"> </span>
+          <span class="word">time.</span>
+        </div>
+      </div>
+
+    </div><!-- transcript-scroll -->
+
+    <div class="transcript-footer">
+      <div class="conf-item">
+        Confidence
+        <div class="conf-bar"><div class="conf-fill" style="width: 94%;"></div></div>
+        <span class="conf-pct">94%</span>
+      </div>
+      <div style="width: 1px; height: 14px; background: var(--border);"></div>
+      <div class="conf-item">148 words · <span style="color: var(--red); margin-left: 2px;">12 fillers marked</span></div>
+      <div style="margin-left: auto;" class="conf-item">
+        Model: <span style="color: var(--text-accent); margin-left: 3px;">Whisper Large v3</span>
+        · Local
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Panel -->
+  <div class="ai-panel">
+    <div class="ai-panel-header">
+      <div class="ai-panel-title">
+        <div class="ai-orb"></div>
+        AI Assistant
+      </div>
+      <div class="panel-tab-row">
+        <div class="ptab active">Suggest</div>
+        <div class="ptab">Chapters</div>
+        <div class="ptab">Shorts</div>
+      </div>
+    </div>
+    <div class="ai-panel-body">
+
+      <div class="ai-section">
+        <div class="ai-section-title">Filler Words Detected</div>
+        <div class="stat-row">
+          <span class="stat-label">Um / Uh</span>
+          <div class="stat-bar"><div class="stat-fill red" style="width: 70%;"></div></div>
+          <span class="stat-count" style="color: var(--red);">8×</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Like / Yeah</span>
+          <div class="stat-bar"><div class="stat-fill amber" style="width: 30%;"></div></div>
+          <span class="stat-count" style="color: var(--amber);">3×</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Honestly / Basically</span>
+          <div class="stat-bar"><div class="stat-fill amber" style="width: 15%;"></div></div>
+          <span class="stat-count" style="color: var(--amber);">1×</span>
+        </div>
+        <div class="ai-card-actions" style="margin-top: 8px;">
+          <div class="card-btn apply">Remove All Fillers</div>
+          <div class="card-btn dismiss">Review Each</div>
+        </div>
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">AI Suggestions</div>
+
+        <div class="ai-card highlight">
+          <div class="ai-card-header">
+            <span class="ai-card-icon">⚡</span>
+            <span class="ai-card-title">Strong Hook Detected</span>
+            <span class="ai-card-badge new">New</span>
+          </div>
+          <div class="ai-card-body">
+            The line <strong>"every single creator I know is using four or five different tools"</strong> has high retention potential. Consider starting the video here.
+          </div>
+          <div class="ai-card-actions">
+            <div class="card-btn apply">Jump to 0:00:28</div>
+            <div class="card-btn dismiss">Dismiss</div>
+          </div>
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-card-header">
+            <span class="ai-card-icon">✂</span>
+            <span class="ai-card-title">Remove Long Silence</span>
+            <span class="ai-card-badge warn">2.1s gap</span>
+          </div>
+          <div class="ai-card-body">
+            2.1-second silence at <strong>0:00:41</strong>. Removing it keeps the pacing tight.
+          </div>
+          <div class="ai-card-actions">
+            <div class="card-btn apply">Remove Silence</div>
+            <div class="card-btn dismiss">Keep</div>
+          </div>
+        </div>
+
+        <div class="ai-card">
+          <div class="ai-card-header">
+            <span class="ai-card-icon">📱</span>
+            <span class="ai-card-title">Shorts Opportunity</span>
+            <span class="ai-card-badge auto">Auto</span>
+          </div>
+          <div class="ai-card-body">
+            Clip from <strong>0:00:18 → 0:01:16</strong> works as a standalone Short. High energy, complete thought, 58 seconds.
+          </div>
+          <div class="ai-card-actions">
+            <div class="card-btn apply">Create Short</div>
+            <div class="card-btn dismiss">Dismiss</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">Auto-Generated Chapters</div>
+        <div class="chapter-list-item active">
+          <span class="chapter-num">01</span>
+          <span class="chapter-list-title">Introduction</span>
+          <span class="chapter-list-ts">0:00:00</span>
+        </div>
+        <div class="chapter-list-item">
+          <span class="chapter-num">02</span>
+          <span class="chapter-list-title">The Problem with Current Tools</span>
+          <span class="chapter-list-ts">0:01:12</span>
+        </div>
+        <div class="chapter-list-item">
+          <span class="chapter-num">03</span>
+          <span class="chapter-list-title">What I've Been Building</span>
+          <span class="chapter-list-ts">0:02:45</span>
+        </div>
+        <div class="chapter-list-item">
+          <span class="chapter-num">04</span>
+          <span class="chapter-list-title">The Style Model Explained</span>
+          <span class="chapter-list-ts">0:04:02</span>
+        </div>
+        <div class="chapter-list-item">
+          <span class="chapter-num">05</span>
+          <span class="chapter-list-title">Demo: First Edit</span>
+          <span class="chapter-list-ts">0:05:30</span>
+        </div>
+        <div class="chapter-list-item">
+          <span class="chapter-num">06</span>
+          <span class="chapter-list-title">How to Get Early Access</span>
+          <span class="chapter-list-ts">0:07:18</span>
+        </div>
+        <div class="ai-card-actions" style="margin-top: 8px;">
+          <div class="card-btn apply" style="flex: 1; justify-content: center;">Add All to YouTube</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

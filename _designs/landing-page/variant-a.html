@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vivido — Variant A: The Filmmaker's Terminal</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080808;
+      --surface: #0f0f0f;
+      --surface-2: #161616;
+      --border: #222222;
+      --accent: #F59E0B;
+      --accent-dim: rgba(245, 158, 11, 0.12);
+      --text-primary: #FAFAFA;
+      --text-secondary: #A1A1AA;
+      --text-muted: #52525B;
+      --radius: 8px;
+    }
+
+    html { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text-primary); }
+    body { min-height: 100vh; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,8,0.92);
+      backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      font-size: 18px; font-weight: 700; letter-spacing: -0.5px;
+      color: var(--text-primary);
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a {
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      text-decoration: none; transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-cta {
+      font-size: 13px; font-weight: 600; color: #000;
+      background: var(--accent); border: none; border-radius: 6px;
+      padding: 7px 16px; cursor: pointer; text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 100px 48px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse 60% 40% at 50% 10%, rgba(245,158,11,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    /* Amber top line */
+    .hero::after {
+      content: '';
+      position: absolute; top: 60px; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.6) 30%, rgba(245,158,11,0.6) 70%, transparent 100%);
+    }
+
+    .hero-content { max-width: 800px; position: relative; z-index: 1; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--accent); background: var(--accent-dim);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 4px; padding: 4px 10px;
+      margin-bottom: 32px;
+    }
+    .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+    .hero-headline {
+      font-size: clamp(52px, 7vw, 88px);
+      font-weight: 800;
+      letter-spacing: -3px;
+      line-height: 1;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+    }
+    .hero-headline em { font-style: normal; color: var(--accent); }
+
+    .hero-subhead {
+      font-size: 18px; font-weight: 400; color: var(--text-secondary);
+      line-height: 1.6; max-width: 560px; margin-bottom: 40px;
+    }
+
+    .hero-ctas { display: flex; gap: 12px; align-items: center; margin-bottom: 72px; }
+    .btn-primary {
+      font-size: 14px; font-weight: 600; color: #000;
+      background: var(--accent); border: none; border-radius: var(--radius);
+      padding: 12px 24px; cursor: pointer; text-decoration: none;
+      transition: transform 0.1s, opacity 0.15s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-ghost {
+      font-size: 14px; font-weight: 500; color: var(--text-secondary);
+      background: transparent; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 24px; cursor: pointer;
+      text-decoration: none; transition: border-color 0.15s, color 0.15s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-ghost:hover { border-color: #444; color: var(--text-primary); }
+    .btn-ghost svg { width: 14px; height: 14px; }
+
+    /* TIMELINE MOCKUP */
+    .timeline-mockup {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      max-width: 900px;
+      box-shadow:
+        0 0 0 1px rgba(245,158,11,0.08),
+        0 32px 80px rgba(0,0,0,0.8),
+        0 0 120px rgba(245,158,11,0.04);
+    }
+    .timeline-header {
+      background: var(--surface-2); border-bottom: 1px solid var(--border);
+      padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .tl-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .tl-dot-r { background: #FF5F57; }
+    .tl-dot-y { background: #FFBD2E; }
+    .tl-dot-g { background: #28CA42; }
+    .tl-title { font-size: 11px; color: var(--text-muted); margin-left: auto; margin-right: auto; letter-spacing: 0.02em; }
+
+    .timeline-body { display: flex; height: 220px; }
+
+    .tl-sidebar {
+      width: 130px; border-right: 1px solid var(--border);
+      background: var(--surface-2);
+      display: flex; flex-direction: column;
+      padding: 8px 0;
+    }
+    .tl-track-label {
+      font-size: 10px; font-weight: 600; color: var(--text-muted);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0 12px; height: 40px; display: flex; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .tl-track-label:last-child { border-bottom: none; }
+
+    .tl-tracks {
+      flex: 1; overflow: hidden; position: relative;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 79px,
+        var(--border) 79px,
+        var(--border) 80px
+      );
+      display: flex; flex-direction: column; gap: 0;
+    }
+    .tl-track { height: 40px; border-bottom: 1px solid var(--border); padding: 5px 8px; display: flex; gap: 4px; align-items: center; position: relative; }
+
+    .tl-clip {
+      border-radius: 4px; height: 28px; position: relative; overflow: hidden; flex-shrink: 0;
+      display: flex; align-items: center; padding: 0 8px;
+    }
+    .tl-clip span { font-size: 9px; font-weight: 600; letter-spacing: 0.04em; color: rgba(255,255,255,0.7); white-space: nowrap; }
+
+    .tl-clip-video-1 { background: linear-gradient(135deg, #1E3A5F 0%, #1A3352 100%); width: 220px; }
+    .tl-clip-video-2 { background: linear-gradient(135deg, #1E3A5F 0%, #1A3352 100%); width: 140px; }
+    .tl-clip-video-3 { background: linear-gradient(135deg, #1E3A5F 0%, #1A3352 100%); width: 180px; }
+    .tl-clip-vo { background: linear-gradient(135deg, #2D1B4E 0%, #251440 100%); width: 320px; }
+    .tl-clip-music { background: linear-gradient(135deg, #1B3D2E 0%, #142E21 100%); width: 500px; }
+    .tl-clip-shorts-1 { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); width: 80px; }
+    .tl-clip-shorts-2 { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); width: 100px; }
+    .tl-caption { background: linear-gradient(135deg, #3B2A1A 0%, #2A1E12 100%); width: 520px; }
+
+    /* Playhead */
+    .tl-playhead {
+      position: absolute; top: 0; bottom: 0; width: 2px;
+      background: var(--accent);
+      left: 228px; z-index: 5;
+      box-shadow: 0 0 8px rgba(245,158,11,0.6);
+    }
+    .tl-playhead::before {
+      content: '';
+      position: absolute; top: -6px; left: -5px;
+      width: 12px; height: 12px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* TIMELINE RULER */
+    .tl-ruler {
+      height: 24px; background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 8px; gap: 0;
+      margin-left: 130px;
+    }
+    .tl-ruler span { font-size: 9px; color: var(--text-muted); width: 80px; }
+
+    /* FEATURES */
+    .features {
+      padding: 100px 48px;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .features-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 16px;
+    }
+    .features-heading {
+      font-size: 36px; font-weight: 700; letter-spacing: -1.5px;
+      color: var(--text-primary); max-width: 500px;
+      line-height: 1.15; margin-bottom: 60px;
+    }
+
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border-radius: 12px; overflow: hidden; }
+    .feature-card {
+      background: var(--surface); padding: 32px;
+      transition: background 0.2s;
+    }
+    .feature-card:hover { background: var(--surface-2); }
+    .feature-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--accent-dim); border: 1px solid rgba(245,158,11,0.2);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px; font-size: 16px;
+    }
+    .feature-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .feature-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* SOCIAL PROOF */
+    .social-proof {
+      border-top: 1px solid var(--border);
+      padding: 40px 48px;
+      display: flex; align-items: center; gap: 48px;
+    }
+    .proof-stat { text-align: center; }
+    .proof-num { font-size: 28px; font-weight: 800; color: var(--text-primary); letter-spacing: -1px; }
+    .proof-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .proof-divider { width: 1px; height: 40px; background: var(--border); }
+
+    .proof-quote {
+      flex: 1; font-size: 14px; color: var(--text-secondary);
+      font-style: italic; line-height: 1.7;
+      border-left: 2px solid var(--accent); padding-left: 20px;
+    }
+    .proof-quote cite { display: block; margin-top: 8px; font-size: 12px; font-style: normal; color: var(--text-muted); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer p { font-size: 12px; color: var(--text-muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 12px; color: var(--text-muted); text-decoration: none; }
+    .footer-links a:hover { color: var(--text-secondary); }
+
+    /* VARIANT LABEL */
+    .variant-label {
+      position: fixed; bottom: 16px; right: 16px; z-index: 1000;
+      background: var(--accent); color: #000;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      padding: 6px 12px; border-radius: 4px; text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">v<span>i</span>vido</div>
+    <div class="nav-links">
+      <a href="#">Features</a>
+      <a href="#">Pricing</a>
+      <a href="#">Changelog</a>
+      <a href="#">Docs</a>
+    </div>
+    <a href="#" class="nav-cta">Download Free</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">Windows + Mac · Now Available</div>
+      <h1 class="hero-headline">
+        The editor that<br />learns how you <em>cut.</em>
+      </h1>
+      <p class="hero-subhead">
+        Local-first. AI that accumulates your editorial taste across every project.
+        From raw footage to Publish Package — without switching a single tool.
+      </p>
+      <div class="hero-ctas">
+        <a href="#" class="btn-primary">Download Free</a>
+        <a href="#" class="btn-ghost">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Watch Demo
+        </a>
+      </div>
+
+      <!-- Timeline mockup -->
+      <div class="timeline-mockup">
+        <div class="timeline-header">
+          <div class="tl-dot tl-dot-r"></div>
+          <div class="tl-dot tl-dot-y"></div>
+          <div class="tl-dot tl-dot-g"></div>
+          <div class="tl-title">product-review-jan-2025.vivido</div>
+        </div>
+        <div class="tl-ruler">
+          <span>0:00</span><span>0:10</span><span>0:20</span><span>0:30</span><span>0:40</span><span>0:50</span><span>1:00</span><span>1:10</span>
+        </div>
+        <div class="timeline-body">
+          <div class="tl-sidebar">
+            <div class="tl-track-label">Video</div>
+            <div class="tl-track-label">Voice</div>
+            <div class="tl-track-label">Music</div>
+            <div class="tl-track-label">Shorts</div>
+            <div class="tl-track-label">Captions</div>
+          </div>
+          <div class="tl-tracks">
+            <div class="tl-playhead"></div>
+            <div class="tl-track">
+              <div class="tl-clip tl-clip-video-1"><span>Intro_wide.mp4</span></div>
+              <div class="tl-clip tl-clip-video-2"><span>B-roll_01.mp4</span></div>
+              <div class="tl-clip tl-clip-video-3"><span>Review_close.mp4</span></div>
+            </div>
+            <div class="tl-track">
+              <div class="tl-clip tl-clip-vo"><span>VO_take3_clean.wav</span></div>
+            </div>
+            <div class="tl-track">
+              <div class="tl-clip tl-clip-music"><span>background_lofi.mp3 · ducked ↓</span></div>
+            </div>
+            <div class="tl-track">
+              <div class="tl-clip tl-clip-shorts-1"><span>↕ Short 1</span></div>
+              <div class="tl-clip tl-clip-shorts-2"><span>↕ Short 2</span></div>
+            </div>
+            <div class="tl-track">
+              <div class="tl-clip tl-caption"><span>AI captions · 47 words · EN</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <p class="features-label">Why Vivido</p>
+    <h2 class="features-heading">Four features. All four required.</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">GPU 4K Playback</h3>
+        <p class="feature-desc">Hardware-accelerated decode. VideoToolbox on Mac. NVDEC on Windows. Frame one plays instantly. No spinner. No compression.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3 class="feature-title">YouTube-Native Timeline</h3>
+        <p class="feature-desc">Chapters, Shorts markers, End Screens as first-class draggable timeline objects. The publish package builds itself as you edit.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✏️</div>
+        <h3 class="feature-title">Transcript Editing</h3>
+        <p class="feature-desc">Whisper transcribes in the background. Delete a word in the transcript — the timeline cuts automatically. No razor tool needed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎛️</div>
+        <h3 class="feature-title">Audio Room</h3>
+        <p class="feature-desc">AI noise removal. Platform-specific LUFS normalization (YouTube, Shorts, Podcast). One click, broadcast-ready audio.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3 class="feature-title">Publish Package</h3>
+        <p class="feature-desc">One action: main MP4 + Shorts clips (9:16 auto-cropped) + 3 thumbnail candidates + chapters.txt. Done.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3 class="feature-title">Style Model</h3>
+        <p class="feature-desc">Observes silently. At project 5 it surfaces insights. At project 20 it pre-stages your rough cut. Zero churn at 20+ projects.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF -->
+  <div class="social-proof">
+    <div class="proof-stat">
+      <div class="proof-num">4K</div>
+      <div class="proof-label">Instant playback</div>
+    </div>
+    <div class="proof-divider"></div>
+    <div class="proof-stat">
+      <div class="proof-num">60%</div>
+      <div class="proof-label">Time saved</div>
+    </div>
+    <div class="proof-divider"></div>
+    <div class="proof-stat">
+      <div class="proof-num">0</div>
+      <div class="proof-label">Tool switches</div>
+    </div>
+    <div class="proof-divider"></div>
+    <blockquote class="proof-quote">
+      "Just edited my first video with Vivido and I genuinely don't understand why I was using 4 apps before."
+      <cite>— Maya, 45K subscribers, Delhi</cite>
+    </blockquote>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2026 Vivido. Built by filmmakers, for filmmakers.</p>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Changelog</a>
+      <a href="#">Twitter / X</a>
+    </div>
+  </footer>
+
+  <div class="variant-label">Variant A — Filmmaker's Terminal</div>
+</body>
+</html>

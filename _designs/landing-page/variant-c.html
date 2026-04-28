@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vivido — Variant C: Product Screenshot Hero</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #111114;
+      --surface: #18181c;
+      --surface-2: #1e1e24;
+      --border: #2a2a32;
+      --border-light: #32323e;
+      --accent: #FFFFFF;
+      --accent-blue: #6366F1;
+      --accent-blue-dim: rgba(99, 102, 241, 0.12);
+      --text-primary: #F4F4F8;
+      --text-secondary: #8B8B9E;
+      --text-muted: #4B4B5E;
+      --radius: 10px;
+      --glow: rgba(99,102,241,0.15);
+    }
+
+    html { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-primary); }
+    body { min-height: 100vh; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 58px;
+      background: rgba(17,17,20,0.88);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+    }
+    .logo { font-size: 17px; font-weight: 800; letter-spacing: -0.6px; }
+    .logo span { color: var(--accent-blue); }
+    .nav-center { display: flex; gap: 28px; }
+    .nav-center a { font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; }
+    .nav-center a:hover { color: var(--text-primary); }
+    .nav-end { display: flex; gap: 8px; align-items: center; }
+    .btn-nav-ghost {
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 14px; text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-nav-ghost:hover { border-color: var(--border-light); color: var(--text-primary); }
+    .btn-nav-primary {
+      font-size: 13px; font-weight: 600; color: #fff;
+      background: var(--accent-blue); border: none;
+      border-radius: 8px; padding: 7px 16px; text-decoration: none;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 120px 40px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero-noise {
+      position: absolute; inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+    .hero-glow-top {
+      position: absolute; top: -150px; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 700px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* NEW BADGE */
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 5px 14px 5px 8px;
+      margin-bottom: 28px; cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .badge:hover { border-color: var(--border-light); }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #22C55E; box-shadow: 0 0 6px rgba(34,197,94,0.6);
+    }
+    .badge-text { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+    .badge-text strong { color: var(--text-primary); font-weight: 600; }
+    .badge-arrow { font-size: 12px; color: var(--text-muted); }
+
+    /* HEADLINE */
+    .hero-headline {
+      font-size: clamp(44px, 6vw, 72px);
+      font-weight: 800; letter-spacing: -2.5px;
+      line-height: 1.05;
+      text-align: center;
+      color: var(--text-primary);
+      max-width: 700px;
+      margin-bottom: 20px;
+    }
+    .hero-subhead {
+      font-size: 17px; color: var(--text-secondary);
+      text-align: center; line-height: 1.65;
+      max-width: 520px; margin-bottom: 36px;
+    }
+
+    .hero-ctas {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 64px;
+    }
+    .btn-main {
+      font-size: 14px; font-weight: 700; color: #fff;
+      background: var(--accent-blue); border: none;
+      border-radius: var(--radius); padding: 12px 24px; text-decoration: none;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.25);
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+    .btn-main:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(99,102,241,0.35); }
+    .btn-secondary {
+      font-size: 14px; font-weight: 500; color: var(--text-secondary);
+      background: transparent; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 24px; text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--border-light); color: var(--text-primary); }
+
+    /* PLATFORM LOGOS */
+    .platforms {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 64px;
+    }
+    .platform-badge {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .platform-sep { color: var(--border); font-size: 14px; }
+
+    /* APP SCREENSHOT MOCKUP */
+    .screenshot-wrap {
+      width: 100%; max-width: 960px;
+      position: relative; perspective: 1200px;
+    }
+    .screenshot-frame {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transform: rotateX(4deg) scale(0.97);
+      transform-origin: bottom center;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 40px 100px rgba(0,0,0,0.9),
+        0 0 80px rgba(99,102,241,0.06);
+    }
+    .sf-titlebar {
+      background: var(--surface-2); height: 40px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 16px; gap: 8px;
+    }
+    .sf-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .sf-r { background: #FF5F57; }
+    .sf-y { background: #FFBD2E; }
+    .sf-g { background: #28CA42; }
+    .sf-title { font-size: 11px; color: var(--text-muted); margin: 0 auto; }
+    .sf-toolbar {
+      background: var(--surface-2); height: 36px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 12px; gap: 8px;
+    }
+    .sf-btn {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 5px; padding: 3px 10px;
+      font-size: 10px; color: var(--text-muted); cursor: pointer;
+    }
+    .sf-btn.active { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: var(--accent-blue); }
+    .sf-spacer { flex: 1; }
+    .sf-export-btn {
+      background: var(--accent-blue); border: none;
+      border-radius: 5px; padding: 4px 12px;
+      font-size: 10px; font-weight: 700; color: #fff; cursor: pointer;
+    }
+
+    /* THE ACTUAL EDITOR MOCKUP */
+    .editor-body {
+      display: flex; height: 340px;
+    }
+    .editor-sidebar {
+      width: 200px; background: var(--surface); border-right: 1px solid var(--border);
+      padding: 12px; overflow: hidden;
+    }
+    .editor-sidebar-header { font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+    .media-item {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px; margin-bottom: 4px;
+      display: flex; gap: 8px; align-items: center;
+    }
+    .media-thumb {
+      width: 36px; height: 24px; border-radius: 3px; flex-shrink: 0;
+      background: linear-gradient(135deg, #1E3A5F 0%, #1A3352 100%);
+    }
+    .media-info { overflow: hidden; }
+    .media-name { font-size: 9px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .media-meta { font-size: 8px; color: var(--text-muted); margin-top: 1px; }
+
+    .editor-main { flex: 1; display: flex; flex-direction: column; }
+    .editor-preview {
+      flex: 1; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .preview-inner {
+      width: 72%; aspect-ratio: 16/9; background: #0a0a0a;
+      border-radius: 4px; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .preview-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%); }
+    .preview-subject {
+      position: relative; z-index: 1;
+      font-size: 9px; color: rgba(255,255,255,0.15); text-align: center;
+    }
+    .preview-timecode {
+      position: absolute; bottom: 8px; left: 8px;
+      font-size: 10px; font-weight: 700; color: #fff;
+      font-variant-numeric: tabular-nums; letter-spacing: 0.05em;
+    }
+    .chapter-marker {
+      position: absolute; top: 0; bottom: 0; width: 1.5px;
+      background: #F59E0B;
+    }
+    .chapter-tag {
+      position: absolute; top: 4px;
+      background: #F59E0B; color: #000;
+      font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    .editor-timeline {
+      height: 130px; background: var(--surface-2); border-top: 1px solid var(--border);
+      overflow: hidden; position: relative;
+    }
+    .tl-ruler-2 {
+      height: 18px; background: var(--bg); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 120px 0 8px;
+      gap: 0;
+    }
+    .tl-ruler-2 span { font-size: 8px; color: var(--text-muted); width: 60px; }
+    .tl-rows { margin-left: 100px; }
+    .tl-row-wrap { display: flex; height: 28px; border-bottom: 1px solid var(--border); }
+    .tl-label-cell {
+      position: absolute; left: 0; width: 100px;
+      height: 28px; background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 8px;
+      font-size: 8px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .tl-cells { padding: 3px 0 3px 4px; display: flex; gap: 2px; margin-left: 100px; position: relative; z-index: 1; }
+    .tc { height: 22px; border-radius: 3px; flex-shrink: 0; display: flex; align-items: center; padding: 0 6px; }
+    .tc span { font-size: 8px; font-weight: 600; color: rgba(255,255,255,0.6); white-space: nowrap; }
+    .tc-v { background: #1E3A5F; }
+    .tc-v2 { background: #1A3352; }
+    .tc-a { background: #2D1B4E; }
+    .tc-m { background: #1B3D2E; }
+    .tc-s { background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.4); }
+
+    .ph-line {
+      position: absolute; top: 18px; bottom: 0; left: calc(100px + 176px); width: 1.5px;
+      background: var(--accent-blue); z-index: 10;
+      box-shadow: 0 0 6px rgba(99,102,241,0.8);
+    }
+
+    .editor-right { width: 200px; background: var(--surface); border-left: 1px solid var(--border); padding: 12px; }
+    .inspector-title { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .inspector-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .insp-label { font-size: 10px; color: var(--text-secondary); }
+    .insp-value { font-size: 10px; font-weight: 600; color: var(--text-primary); }
+    .insp-badge { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #22C55E; border-radius: 4px; padding: 2px 6px; font-size: 9px; font-weight: 700; }
+    .insp-lufs { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: var(--accent-blue); border-radius: 4px; padding: 2px 6px; font-size: 9px; font-weight: 700; }
+
+    /* SOCIAL PROOF BAR */
+    .logos-bar {
+      padding: 24px 48px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
+    }
+    .logos-bar-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .creator-chip {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 4px 12px 4px 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .creator-avatar {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+      font-size: 9px; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+    .creator-name { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+    .creator-subs { font-size: 10px; color: var(--text-muted); }
+
+    /* 3 FEATURE CARDS */
+    .cards-section { padding: 80px 48px; max-width: 1100px; margin: 0 auto; }
+    .cards-heading { font-size: 32px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 8px; }
+    .cards-subhead { font-size: 15px; color: var(--text-secondary); margin-bottom: 48px; }
+    .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 28px; overflow: hidden; position: relative;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--border-light); }
+    .card.card-wide { grid-column: span 2; }
+    .card-tag { font-size: 10px; font-weight: 700; color: var(--accent-blue); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+    .card-title { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 10px; }
+    .card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; max-width: 400px; }
+    .card-glow {
+      position: absolute; top: -40px; right: -40px;
+      width: 160px; height: 160px;
+      background: radial-gradient(var(--accent-blue-dim), transparent 70%);
+      pointer-events: none;
+    }
+
+    /* COMPARISON TABLE */
+    .compare-section { padding: 0 48px 80px; max-width: 1100px; margin: 0 auto; }
+    .compare-table { width: 100%; border-collapse: collapse; }
+    .compare-table th {
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 12px 16px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table th:first-child { width: 220px; }
+    .compare-table td {
+      padding: 12px 16px; font-size: 13px; color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table td:first-child { color: var(--text-primary); font-weight: 500; }
+    .compare-table .vivido-col { color: var(--text-primary); font-weight: 600; }
+    .check { color: #22C55E; font-weight: 700; }
+    .cross { color: var(--text-muted); }
+    .compare-table th.highlight, .compare-table td.vivido-col { background: rgba(99,102,241,0.04); }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 32px 48px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-logo { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
+    .footer-logo span { color: var(--accent-blue); }
+    footer p { font-size: 12px; color: var(--text-muted); }
+
+    .variant-label {
+      position: fixed; bottom: 16px; right: 16px; z-index: 1000;
+      background: var(--accent-blue); color: #fff;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      padding: 6px 12px; border-radius: 4px; text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">vi<span>v</span>ido</div>
+    <div class="nav-center">
+      <a href="#">Features</a>
+      <a href="#">Pricing</a>
+      <a href="#">Changelog</a>
+      <a href="#">Docs</a>
+    </div>
+    <div class="nav-end">
+      <a href="#" class="btn-nav-ghost">Sign in</a>
+      <a href="#" class="btn-nav-primary">Download Free</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-noise"></div>
+    <div class="hero-glow-top"></div>
+
+    <!-- NEW BADGE -->
+    <div class="badge">
+      <div class="badge-dot"></div>
+      <div class="badge-text"><strong>Now on Windows + Mac</strong> · Public Beta</div>
+      <div class="badge-arrow">→</div>
+    </div>
+
+    <h1 class="hero-headline">
+      From raw footage to<br/>published — in one app.
+    </h1>
+    <p class="hero-subhead">
+      No more Riverside → FCP → VidIQ → YouTube Studio tool-switching.
+      The editor that learns how you cut, works offline, and publishes for you.
+    </p>
+    <div class="hero-ctas">
+      <a href="#" class="btn-main">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Download Free
+      </a>
+      <a href="#" class="btn-secondary">Watch demo →</a>
+    </div>
+
+    <div class="platforms">
+      <div class="platform-badge">Windows 10/11</div>
+      <div class="platform-sep">·</div>
+      <div class="platform-badge">macOS 13+</div>
+      <div class="platform-sep">·</div>
+      <div class="platform-badge">No account required</div>
+    </div>
+
+    <!-- APP SCREENSHOT -->
+    <div class="screenshot-wrap">
+      <div class="screenshot-frame">
+        <div class="sf-titlebar">
+          <div class="sf-dot sf-r"></div>
+          <div class="sf-dot sf-y"></div>
+          <div class="sf-dot sf-g"></div>
+          <div class="sf-title">product-review-jan-2025.vivido — Vivido</div>
+        </div>
+        <div class="sf-toolbar">
+          <div class="sf-btn active">Timeline</div>
+          <div class="sf-btn">Transcript</div>
+          <div class="sf-btn">Audio Room</div>
+          <div class="sf-spacer"></div>
+          <div class="sf-export-btn">Publish Package ▸</div>
+        </div>
+        <div class="editor-body">
+          <!-- SIDEBAR -->
+          <div class="editor-sidebar">
+            <div class="editor-sidebar-header">Media</div>
+            <div class="media-item">
+              <div class="media-thumb"></div>
+              <div class="media-info">
+                <div class="media-name">Intro_wide.mp4</div>
+                <div class="media-meta">4K · 2:34 · H.264</div>
+              </div>
+            </div>
+            <div class="media-item">
+              <div class="media-thumb" style="background:linear-gradient(135deg,#2D1B4E,#251440)"></div>
+              <div class="media-info">
+                <div class="media-name">VO_take3.wav</div>
+                <div class="media-meta">48kHz · Stereo</div>
+              </div>
+            </div>
+            <div class="media-item">
+              <div class="media-thumb" style="background:linear-gradient(135deg,#1B3D2E,#142E21)"></div>
+              <div class="media-info">
+                <div class="media-name">lofi_bg.mp3</div>
+                <div class="media-meta">Stereo · 3:12</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MAIN AREA -->
+          <div class="editor-main">
+            <!-- PREVIEW -->
+            <div class="editor-preview">
+              <div class="preview-inner">
+                <div class="preview-gradient"></div>
+                <div class="preview-subject">▶ 4K Preview</div>
+                <!-- Chapter markers -->
+                <div class="chapter-marker" style="left:25%">
+                  <div class="chapter-tag">Intro</div>
+                </div>
+                <div class="chapter-marker" style="left:55%">
+                  <div class="chapter-tag" style="background:transparent;color:#F59E0B;border:1px solid rgba(245,158,11,0.5)">Review</div>
+                </div>
+                <div class="preview-timecode">00:00:12:08</div>
+              </div>
+            </div>
+            <!-- TIMELINE -->
+            <div class="editor-timeline">
+              <div class="tl-ruler-2">
+                <span>0:00</span><span>0:15</span><span>0:30</span><span>0:45</span><span>1:00</span><span>1:15</span>
+              </div>
+              <!-- Playhead -->
+              <div class="ph-line"></div>
+              <!-- Tracks -->
+              <div style="position:relative;">
+                <div class="tl-label-cell" style="top:0">VIDEO</div>
+                <div class="tl-cells">
+                  <div class="tc tc-v" style="width:160px"><span>Intro_wide.mp4</span></div>
+                  <div class="tc tc-v2" style="width:100px"><span>B-roll_01.mp4</span></div>
+                  <div class="tc tc-v" style="width:140px"><span>Review_close.mp4</span></div>
+                </div>
+              </div>
+              <div style="position:relative;">
+                <div class="tl-label-cell" style="top:0">VOICE</div>
+                <div class="tl-cells">
+                  <div class="tc tc-a" style="width:360px"><span>VO_take3_clean.wav · noise removed ✓</span></div>
+                </div>
+              </div>
+              <div style="position:relative;">
+                <div class="tl-label-cell" style="top:0">MUSIC</div>
+                <div class="tl-cells">
+                  <div class="tc tc-m" style="width:420px"><span>lofi_bg.mp3 · auto-ducked</span></div>
+                </div>
+              </div>
+              <div style="position:relative;">
+                <div class="tl-label-cell" style="top:0">SHORTS</div>
+                <div class="tl-cells">
+                  <div class="tc tc-s" style="width:70px"><span>↕ S1</span></div>
+                  <div style="width:60px"></div>
+                  <div class="tc tc-s" style="width:90px"><span>↕ S2</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- INSPECTOR -->
+          <div class="editor-right">
+            <div class="inspector-title">Inspector</div>
+            <div class="inspector-row">
+              <span class="insp-label">Resolution</span>
+              <span class="insp-value">3840×2160</span>
+            </div>
+            <div class="inspector-row">
+              <span class="insp-label">Frame rate</span>
+              <span class="insp-value">29.97 fps</span>
+            </div>
+            <div class="inspector-row">
+              <span class="insp-label">Noise removal</span>
+              <span class="insp-badge">Done ✓</span>
+            </div>
+            <div class="inspector-row">
+              <span class="insp-label">Master LUFS</span>
+              <span class="insp-lufs">-14 LUFS</span>
+            </div>
+            <div class="inspector-row">
+              <span class="insp-label">Captions</span>
+              <span class="insp-value">47 words EN</span>
+            </div>
+            <div class="inspector-row">
+              <span class="insp-label">Chapters</span>
+              <span class="insp-value">2 markers</span>
+            </div>
+            <div class="inspector-row">
+              <span class="insp-label">Shorts</span>
+              <span class="insp-value">2 segments</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF / CREATOR CHIPS -->
+  <div class="logos-bar">
+    <span class="logos-bar-label">Used by creators like</span>
+    <div class="creator-chip">
+      <div class="creator-avatar">M</div>
+      <div><div class="creator-name">Maya Sharma</div><div class="creator-subs">45K subs</div></div>
+    </div>
+    <div class="creator-chip">
+      <div class="creator-avatar" style="background:linear-gradient(135deg,#F59E0B,#D97706)">J</div>
+      <div><div class="creator-name">Jess Park</div><div class="creator-subs">180K subs</div></div>
+    </div>
+    <div class="creator-chip">
+      <div class="creator-avatar" style="background:linear-gradient(135deg,#22C55E,#16A34A)">R</div>
+      <div><div class="creator-name">Ravi Mehta</div><div class="creator-subs">Agency · 8 channels</div></div>
+    </div>
+  </div>
+
+  <!-- FEATURE CARDS -->
+  <section class="cards-section">
+    <h2 class="cards-heading">Every tool you need. In one.</h2>
+    <p class="cards-subhead">Riverside → FCP → VidIQ → YouTube Studio. That's your current workflow. Vivido replaces all of it.</p>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-glow"></div>
+        <div class="card-tag">Style Model</div>
+        <h3 class="card-title">The editor that learns how you cut</h3>
+        <p class="card-desc">Every project teaches Vivido your cut rhythm, hook structure, and audio treatment. At project 5 it surfaces insights. At project 20, it pre-stages your rough cut. Zero creators who've completed 20+ projects have churned.</p>
+      </div>
+      <div class="card">
+        <div class="card-tag">YouTube-Native</div>
+        <h3 class="card-title">Chapters and Shorts live in the timeline</h3>
+        <p class="card-desc">No more post-export YouTube Studio work. Mark chapters as first-class timeline objects. One-click Publish Package: main MP4 + Shorts + 3 thumbnail candidates + chapters.txt.</p>
+      </div>
+      <div class="card card-wide">
+        <div class="card-glow" style="width:200px;height:200px;top:-60px;right:80px;background:radial-gradient(rgba(245,158,11,0.08),transparent 70%)"></div>
+        <div class="card-tag" style="color:#F59E0B">Local-first Architecture</div>
+        <h3 class="card-title">Your footage stays on your machine. Your data stays yours.</h3>
+        <p class="card-desc">Hardware GPU decode. Whisper transcription runs locally. Core editing works fully offline. Cloud sync is opt-in. After the CapCut data concerns, "your data stays on your machine" is not a technicality — it's a trust signal.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON TABLE -->
+  <section class="compare-section">
+    <h2 style="font-size:24px;font-weight:800;letter-spacing:-1px;margin-bottom:24px">How Vivido compares</h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th class="highlight">Vivido</th>
+          <th>FCP</th>
+          <th>Premiere</th>
+          <th>Descript</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>GPU 4K playback</td>
+          <td class="vivido-col check">✓ Win + Mac</td>
+          <td class="check">✓ Mac only</td>
+          <td class="check">✓</td>
+          <td class="cross">✗ Browser</td>
+        </tr>
+        <tr>
+          <td>Transcript editing</td>
+          <td class="vivido-col check">✓ Local Whisper</td>
+          <td class="cross">✗</td>
+          <td class="cross">✗</td>
+          <td class="check">✓ Cloud</td>
+        </tr>
+        <tr>
+          <td>YouTube chapters in timeline</td>
+          <td class="vivido-col check">✓ First-class</td>
+          <td class="cross">✗</td>
+          <td class="cross">✗</td>
+          <td class="cross">✗</td>
+        </tr>
+        <tr>
+          <td>Shorts auto-export</td>
+          <td class="vivido-col check">✓ 9:16 auto-crop</td>
+          <td class="cross">✗</td>
+          <td class="cross">✗</td>
+          <td class="cross">✗</td>
+        </tr>
+        <tr>
+          <td>Per-creator style model</td>
+          <td class="vivido-col check">✓ Learns you</td>
+          <td class="cross">✗</td>
+          <td class="cross">✗</td>
+          <td class="cross">✗</td>
+        </tr>
+        <tr>
+          <td>Price / yr</td>
+          <td class="vivido-col" style="color:#22C55E;font-weight:700">$199</td>
+          <td>$299 (Mac only)</td>
+          <td>$660</td>
+          <td>$360</td>
+        </tr>
+        <tr>
+          <td>Works offline</td>
+          <td class="vivido-col check">✓ Fully</td>
+          <td class="check">✓</td>
+          <td class="cross">✗ Cloud req.</td>
+          <td class="cross">✗</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">vi<span>v</span>ido</div>
+    <p>© 2026 Vivido · Built for creators who want pro output without pro complexity</p>
+    <p style="font-size:12px;color:var(--text-muted)">Privacy · Terms · Changelog · Twitter</p>
+  </footer>
+
+  <div class="variant-label">Variant C — Product Screenshot</div>
+</body>
+</html>

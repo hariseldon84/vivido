@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vivido — Publish Package</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-base: #0e0e10;
+    --bg-panel: #141416;
+    --bg-surface: #1a1a1e;
+    --bg-elevated: #222226;
+    --bg-hover: #2a2a30;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.12);
+    --accent: #6366f1;
+    --accent-dim: rgba(99,102,241,0.15);
+    --accent-bright: #818cf8;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --green: #22c55e;
+    --teal: #14b8a6;
+    --text-primary: #f0f0f4;
+    --text-secondary: #8b8b9a;
+    --text-muted: #4a4a58;
+    --text-accent: #818cf8;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+    font-size: 12px; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: grid;
+    grid-template-rows: 36px 1fr;
+    height: 100vh;
+  }
+
+  /* Titlebar */
+  .titlebar {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 12px; gap: 8px; user-select: none;
+  }
+  .traffic-lights { display: flex; gap: 6px; margin-right: 8px; }
+  .tl { width: 12px; height: 12px; border-radius: 50%; }
+  .tl-red { background: #ff5f57; }
+  .tl-yellow { background: #febc2e; }
+  .tl-green { background: #28c840; }
+  .app-logo { font-size: 13px; font-weight: 700; letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px; }
+  .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .view-tabs {
+    display: flex; gap: 2px; margin-left: 20px;
+    background: var(--bg-surface); border-radius: 6px; padding: 2px;
+    border: 1px solid var(--border);
+  }
+  .vtab { padding: 3px 12px; border-radius: 4px; font-size: 11px; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
+  .vtab.active { background: var(--bg-elevated); color: var(--text-primary); }
+  .tb-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .tb-btn {
+    height: 24px; padding: 0 10px;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 5px; color: var(--text-secondary);
+    font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s;
+  }
+  .tb-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .tb-btn.primary {
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    border-color: var(--accent); color: white; font-weight: 600;
+    padding: 0 14px; height: 28px; font-size: 12px;
+  }
+  .tb-btn.primary:hover { opacity: 0.9; }
+
+  /* Main grid */
+  .publish-room {
+    display: grid;
+    grid-template-columns: 340px 1fr 320px;
+    overflow: hidden;
+  }
+
+  /* ── Left: Package summary ── */
+  .package-sidebar {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    height: 40px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 14px; gap: 8px; flex-shrink: 0;
+  }
+  .panel-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.3px; text-transform: uppercase; }
+
+  .package-body {
+    flex: 1; overflow-y: auto; padding: 14px;
+  }
+  .package-body::-webkit-scrollbar { width: 4px; }
+  .package-body::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 2px; }
+
+  /* Readiness score */
+  .readiness-card {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; margin-bottom: 14px;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(20,184,166,0.04) 100%);
+  }
+  .readiness-label { font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .readiness-ring {
+    width: 72px; height: 72px; margin: 0 auto 8px;
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .readiness-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--bg-elevated); stroke-width: 5; }
+  .ring-fill { fill: none; stroke-width: 5; stroke-linecap: round;
+    stroke-dasharray: 201; stroke-dashoffset: 30; /* ~85% */
+    stroke: url(#ringGrad);
+  }
+  .readiness-pct { font-size: 22px; font-weight: 800; color: var(--text-primary); z-index: 1; }
+  .readiness-desc { font-size: 12px; color: var(--text-secondary); }
+  .readiness-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+
+  /* Checklist */
+  .checklist-title { font-size: 10px; font-weight: 600; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 7px 0; border-bottom: 1px solid var(--border);
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-icon {
+    width: 16px; height: 16px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; flex-shrink: 0; margin-top: 1px;
+  }
+  .check-icon.ok { background: rgba(34,197,94,0.15); color: var(--green); }
+  .check-icon.warn { background: rgba(245,158,11,0.12); color: var(--amber); }
+  .check-icon.missing { background: rgba(239,68,68,0.1); color: var(--red); }
+  .check-info { flex: 1; }
+  .check-name { font-size: 11px; font-weight: 500; color: var(--text-primary); }
+  .check-detail { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .check-action {
+    font-size: 10px; color: var(--text-accent); cursor: pointer;
+    transition: color 0.1s; white-space: nowrap;
+  }
+  .check-action:hover { color: var(--accent-bright); }
+
+  /* Output files */
+  .output-section { margin-top: 14px; }
+  .output-file {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 6px;
+    border: 1px solid var(--border); margin-bottom: 5px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .output-file:hover { border-color: var(--border-strong); background: var(--bg-surface); }
+  .output-file.primary-file { border-color: rgba(99,102,241,0.3); background: var(--accent-dim); }
+  .file-icon {
+    width: 28px; height: 28px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .file-info { flex: 1; }
+  .file-name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+  .file-size { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .file-badge {
+    font-size: 9px; padding: 1px 5px; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0;
+  }
+  .file-badge.main { background: var(--accent-dim); color: var(--text-accent); }
+  .file-badge.short { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .file-badge.thumb { background: rgba(20,184,166,0.15); color: var(--teal); }
+  .file-badge.srt { background: rgba(34,197,94,0.1); color: var(--green); }
+
+  /* ── Center: YouTube Metadata Editor ── */
+  .metadata-editor {
+    background: var(--bg-base);
+    display: flex; flex-direction: column;
+    overflow: hidden; border-right: 1px solid var(--border);
+  }
+
+  .meta-toolbar {
+    height: 40px; background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 8px; flex-shrink: 0;
+  }
+  .meta-platform-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 5px; padding: 3px 10px;
+    font-size: 11px; font-weight: 600; color: #fca5a5;
+  }
+  .meta-platform-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); }
+  .ai-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+    border: 1px solid rgba(99,102,241,0.3); border-radius: 4px;
+    padding: 2px 8px; font-size: 10px; color: var(--accent-bright); cursor: pointer;
+  }
+  .ai-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-bright); box-shadow: 0 0 4px var(--accent); }
+
+  .meta-body {
+    flex: 1; overflow-y: auto; padding: 20px 24px;
+  }
+  .meta-body::-webkit-scrollbar { width: 5px; }
+  .meta-body::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
+
+  /* Thumbnail + title row */
+  .meta-top-row {
+    display: grid; grid-template-columns: auto 1fr; gap: 16px; margin-bottom: 20px;
+    align-items: start;
+  }
+  .thumbnail-area {
+    width: 160px; flex-shrink: 0;
+  }
+  .thumbnail-preview {
+    aspect-ratio: 16/9; border-radius: 6px; overflow: hidden;
+    border: 1px solid var(--border-strong); position: relative; cursor: pointer;
+    background: linear-gradient(135deg, #1a1060 0%, #2d1b69 50%, #0f172a 100%);
+    transition: border-color 0.15s;
+  }
+  .thumbnail-preview:hover { border-color: var(--accent); }
+  .thumb-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45); opacity: 0;
+    transition: opacity 0.15s;
+    font-size: 11px; color: white; font-weight: 500;
+  }
+  .thumbnail-preview:hover .thumb-overlay { opacity: 1; }
+  .thumb-meta { font-size: 9px; color: var(--text-muted); margin-top: 5px; text-align: center; }
+  .thumb-actions {
+    display: flex; gap: 4px; margin-top: 6px;
+  }
+  .thumb-btn {
+    flex: 1; height: 22px; border-radius: 4px;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 10px; cursor: pointer; transition: all 0.1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .thumb-btn:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+
+  .meta-right { display: flex; flex-direction: column; gap: 10px; }
+
+  /* Fields */
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  .field-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .field-label .ai-suggest {
+    font-size: 9px; color: var(--text-accent); cursor: pointer;
+    text-transform: none; letter-spacing: 0; font-weight: 400;
+    background: var(--accent-dim); border-radius: 3px; padding: 1px 5px;
+  }
+  .char-count { margin-left: auto; font-family: 'SF Mono', monospace; font-weight: 400; font-size: 10px; }
+  .char-count.ok { color: var(--green); }
+  .char-count.warn { color: var(--amber); }
+  .char-count.bad { color: var(--red); }
+
+  .meta-input {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-primary); font-size: 13px;
+    padding: 8px 12px; outline: none; width: 100%;
+    font-family: inherit; transition: border-color 0.15s;
+  }
+  .meta-input:focus { border-color: var(--accent); }
+  .meta-input.title-field { font-size: 14px; font-weight: 600; }
+  textarea.meta-input {
+    resize: none; line-height: 1.5; font-size: 12px;
+  }
+
+  /* Title score */
+  .title-score-row {
+    display: flex; align-items: center; gap: 6px; margin-top: 4px;
+  }
+  .score-label { font-size: 10px; color: var(--text-muted); }
+  .score-bar { flex: 1; height: 4px; background: var(--bg-elevated); border-radius: 2px; }
+  .score-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--amber), var(--green)); }
+  .score-pct { font-size: 10px; font-family: 'SF Mono', monospace; color: var(--green); }
+
+  /* Tags */
+  .tags-area { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .tag {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 8px;
+    font-size: 11px; color: var(--text-secondary); cursor: pointer;
+    transition: all 0.1s;
+  }
+  .tag:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .tag.ai-tag { border-color: rgba(99,102,241,0.25); color: var(--text-accent); background: var(--accent-dim); }
+  .tag-remove { font-size: 10px; color: var(--text-muted); line-height: 1; }
+
+  /* Chapter timestamps */
+  .chapters-preview {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; margin-top: 4px;
+  }
+  .chapter-ts-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 0; font-size: 11px;
+  }
+  .chapter-ts-time { font-family: 'SF Mono', monospace; color: var(--accent-bright); width: 50px; flex-shrink: 0; }
+  .chapter-ts-title { color: var(--text-secondary); flex: 1; }
+  .chapter-ts-edit { font-size: 10px; color: var(--text-muted); cursor: pointer; transition: color 0.1s; }
+  .chapter-ts-edit:hover { color: var(--text-primary); }
+
+  /* ── Right: Upload Panel ── */
+  .upload-panel {
+    background: var(--bg-panel);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .upload-body {
+    flex: 1; overflow-y: auto; padding: 14px;
+  }
+  .upload-body::-webkit-scrollbar { width: 4px; }
+  .upload-body::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 2px; }
+
+  /* Render Progress */
+  .render-section {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; margin-bottom: 14px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(20,184,166,0.03));
+  }
+  .render-title { font-size: 11px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .render-pulsedot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+  .render-item { margin-bottom: 8px; }
+  .render-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .render-item-name { font-size: 11px; color: var(--text-secondary); }
+  .render-item-status { font-size: 10px; font-family: 'SF Mono', monospace; }
+  .render-item-status.done { color: var(--green); }
+  .render-item-status.progress { color: var(--accent-bright); }
+  .render-item-status.waiting { color: var(--text-muted); }
+
+  .render-bar { height: 3px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; }
+  .render-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+  .render-fill.done { background: var(--green); width: 100%; }
+  .render-fill.progress { background: linear-gradient(90deg, var(--accent), var(--accent-bright)); width: 67%; }
+  .render-fill.waiting { background: var(--bg-elevated); width: 0%; }
+
+  /* Destinations */
+  .destinations-title { font-size: 10px; font-weight: 600; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+
+  .dest-card {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; margin-bottom: 8px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .dest-card:hover { border-color: var(--border-strong); }
+  .dest-card.active { border-color: rgba(99,102,241,0.3); background: var(--accent-dim); }
+
+  .dest-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .dest-logo {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .dest-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+  .dest-account { font-size: 10px; color: var(--text-muted); }
+  .dest-toggle { margin-left: auto; }
+
+  .toggle-switch {
+    width: 36px; height: 20px; border-radius: 10px;
+    position: relative; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle-switch.on { background: var(--accent); }
+  .toggle-switch.off { background: var(--bg-elevated); border: 1px solid var(--border); }
+  .toggle-knob {
+    position: absolute; top: 2px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: left 0.2s;
+  }
+  .toggle-switch.on .toggle-knob { left: 18px; }
+  .toggle-switch.off .toggle-knob { left: 2px; }
+
+  .dest-options {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+  }
+  .dest-opt {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10px; color: var(--text-muted);
+  }
+  .dest-opt-check {
+    width: 12px; height: 12px; border-radius: 3px;
+    background: var(--accent-dim); border: 1px solid rgba(99,102,241,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; color: var(--text-accent); flex-shrink: 0;
+  }
+  .dest-opt-check.off { background: var(--bg-elevated); border-color: var(--border); }
+
+  /* Schedule */
+  .schedule-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+  }
+  .schedule-label { font-size: 10px; color: var(--text-secondary); flex: 1; }
+  .schedule-val {
+    font-size: 11px; font-family: 'SF Mono', monospace; color: var(--text-primary);
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 8px;
+  }
+
+  /* Big publish button */
+  .publish-btn-area { padding: 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .publish-btn {
+    width: 100%; height: 44px; border-radius: 8px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border: none; color: white; font-size: 14px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 8px; transition: all 0.2s; letter-spacing: 0.3px;
+    box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+  }
+  .publish-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 28px rgba(99,102,241,0.4);
+  }
+  .publish-btn:active { transform: translateY(0); }
+  .publish-btn-sub { font-size: 11px; font-weight: 400; opacity: 0.75; }
+
+  .publish-status {
+    margin-top: 8px; text-align: center;
+    font-size: 10px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .status-lock { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="traffic-lights">
+      <div class="tl tl-red"></div>
+      <div class="tl tl-yellow"></div>
+      <div class="tl tl-green"></div>
+    </div>
+    <div class="app-logo"><div class="logo-dot"></div> Vivido</div>
+    <div class="view-tabs">
+      <div class="vtab">Editor</div>
+      <div class="vtab">Transcript</div>
+      <div class="vtab">Audio Room</div>
+      <div class="vtab active">Publish</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-btn">◀ Back to Editor</div>
+      <div class="tb-btn">Save Draft</div>
+      <div class="tb-btn primary">🚀 Publish Now</div>
+    </div>
+  </div>
+
+  <!-- Publish Room -->
+  <div class="publish-room">
+
+    <!-- Left: Package Summary -->
+    <div class="package-sidebar">
+      <div class="panel-header">
+        <span class="panel-title">Package</span>
+        <span style="font-size: 10px; color: var(--text-muted); margin-left: auto;">6 items</span>
+      </div>
+      <div class="package-body">
+
+        <div class="readiness-card">
+          <div class="readiness-label">Publish Readiness</div>
+          <div class="readiness-ring">
+            <svg viewBox="0 0 72 72">
+              <defs>
+                <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="100%" stop-color="#14b8a6"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="36" cy="36" r="32"/>
+              <circle class="ring-fill" cx="36" cy="36" r="32" stroke="url(#ringGrad)"/>
+            </svg>
+            <span class="readiness-pct">85%</span>
+          </div>
+          <div class="readiness-desc">Almost ready</div>
+          <div class="readiness-sub">1 warning · fix to reach 100%</div>
+        </div>
+
+        <div class="checklist-title">Checklist</div>
+        <div class="check-item">
+          <div class="check-icon ok">✓</div>
+          <div class="check-info">
+            <div class="check-name">Main Video Rendered</div>
+            <div class="check-detail">4K H.264 · 8:14 · 1.2 GB</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon ok">✓</div>
+          <div class="check-info">
+            <div class="check-name">Thumbnail Set</div>
+            <div class="check-detail">Custom · 1280×720 · 892 KB</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon ok">✓</div>
+          <div class="check-info">
+            <div class="check-name">Captions / SRT</div>
+            <div class="check-detail">Auto-generated · 94% accuracy</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon ok">✓</div>
+          <div class="check-info">
+            <div class="check-name">YouTube Chapters</div>
+            <div class="check-detail">6 chapters · in description</div>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon warn">!</div>
+          <div class="check-info">
+            <div class="check-name">Title Optimization</div>
+            <div class="check-detail">Score 72% — could be stronger</div>
+          </div>
+          <span class="check-action">Improve</span>
+        </div>
+        <div class="check-item">
+          <div class="check-icon ok">✓</div>
+          <div class="check-info">
+            <div class="check-name">Shorts Clips (3)</div>
+            <div class="check-detail">58s · 43s · 31s — 9:16 cropped</div>
+          </div>
+        </div>
+
+        <div class="output-section">
+          <div class="checklist-title" style="margin-bottom: 8px;">Output Files</div>
+          <div class="output-file primary-file">
+            <div class="file-icon" style="background: rgba(99,102,241,0.15); color: var(--text-accent);">🎬</div>
+            <div class="file-info">
+              <div class="file-name">main_video_4k.mp4</div>
+              <div class="file-size">4K H.264 · 1.2 GB · 8:14</div>
+            </div>
+            <span class="file-badge main">Main</span>
+          </div>
+          <div class="output-file">
+            <div class="file-icon" style="background: rgba(245,158,11,0.12); color: var(--amber);">📱</div>
+            <div class="file-info">
+              <div class="file-name">short_01_58s.mp4</div>
+              <div class="file-size">1080×1920 · 9:16 · 42 MB</div>
+            </div>
+            <span class="file-badge short">Short</span>
+          </div>
+          <div class="output-file">
+            <div class="file-icon" style="background: rgba(245,158,11,0.12); color: var(--amber);">📱</div>
+            <div class="file-info">
+              <div class="file-name">short_02_43s.mp4</div>
+              <div class="file-size">1080×1920 · 9:16 · 31 MB</div>
+            </div>
+            <span class="file-badge short">Short</span>
+          </div>
+          <div class="output-file">
+            <div class="file-icon" style="background: rgba(20,184,166,0.12); color: var(--teal);">🖼</div>
+            <div class="file-info">
+              <div class="file-name">thumbnail_custom.png</div>
+              <div class="file-size">1280×720 · 892 KB</div>
+            </div>
+            <span class="file-badge thumb">Thumb</span>
+          </div>
+          <div class="output-file">
+            <div class="file-icon" style="background: rgba(34,197,94,0.1); color: var(--green);">📝</div>
+            <div class="file-info">
+              <div class="file-name">captions_en.srt</div>
+              <div class="file-size">English · 148 cues · Whisper</div>
+            </div>
+            <span class="file-badge srt">SRT</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Center: YouTube Metadata Editor -->
+    <div class="metadata-editor">
+      <div class="meta-toolbar">
+        <div class="meta-platform-pill">
+          <div class="dot"></div>
+          YouTube
+        </div>
+        <div class="ai-badge">
+          <div class="ai-dot"></div>
+          AI Generate Metadata
+        </div>
+        <div style="margin-left: auto; font-size: 11px; color: var(--text-muted);">Video Visibility: Public</div>
+      </div>
+
+      <div class="meta-body">
+
+        <div class="meta-top-row">
+          <!-- Thumbnail -->
+          <div class="thumbnail-area">
+            <div class="thumbnail-preview">
+              <!-- Gradient stand-in for actual thumbnail -->
+              <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a1060,#2d1b69,#0f172a);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;">
+                <div style="font-size:28px;opacity:0.5;">🎬</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.35);text-align:center;padding:0 8px;line-height:1.3;">The future of<br>video creation</div>
+              </div>
+              <div class="thumb-overlay">Change</div>
+            </div>
+            <div class="thumb-meta">1280 × 720 · 892 KB</div>
+            <div class="thumb-actions">
+              <div class="thumb-btn">Upload</div>
+              <div class="thumb-btn" style="color: var(--text-accent); border-color: rgba(99,102,241,0.25); background: var(--accent-dim);">AI Gen</div>
+            </div>
+          </div>
+
+          <!-- Title + quick fields -->
+          <div class="meta-right">
+            <div class="field-group">
+              <div class="field-label">
+                Title
+                <span class="ai-suggest">✦ Suggest</span>
+                <span class="char-count warn">82/100</span>
+              </div>
+              <input class="meta-input title-field" type="text" value="I Built a Video Editing Tool That Kills 5 Apps at Once (Vivido Dev Log #1)">
+            </div>
+            <div class="title-score-row">
+              <span class="score-label">CTR Score</span>
+              <div class="score-bar"><div class="score-fill" style="width: 72%;"></div></div>
+              <span class="score-pct">72%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-bottom: 14px;">
+          <div class="field-label">
+            Description
+            <span class="ai-suggest">✦ Auto-write</span>
+            <span class="char-count ok">420/5000</span>
+          </div>
+          <textarea class="meta-input" rows="5">Every creator I know uses 4-7 tools to make one video. Recording in Riverside, editing in Final Cut, captions in Submagic, optimization in VidIQ... it's insane.
+
+So I've been building Vivido — a single desktop app that does all of it, and gets smarter every time you use it by learning how you edit.
+
+🕐 Chapters:
+0:00 Introduction
+1:12 The Problem With Current Tools
+2:45 What I've Been Building
+4:02 The Style Model Explained</textarea>
+        </div>
+
+        <div class="field-group" style="margin-bottom: 14px;">
+          <div class="field-label">
+            Tags
+            <span class="ai-suggest">✦ Add More</span>
+          </div>
+          <div class="tags-area">
+            <div class="tag ai-tag">video editing <span class="tag-remove">×</span></div>
+            <div class="tag ai-tag">AI tools 2025 <span class="tag-remove">×</span></div>
+            <div class="tag ai-tag">YouTube creator <span class="tag-remove">×</span></div>
+            <div class="tag">Final Cut Pro <span class="tag-remove">×</span></div>
+            <div class="tag">CapCut alternative <span class="tag-remove">×</span></div>
+            <div class="tag">dev log <span class="tag-remove">×</span></div>
+            <div class="tag">indie dev <span class="tag-remove">×</span></div>
+            <div class="tag">Vivido <span class="tag-remove">×</span></div>
+            <div class="tag" style="border-style:dashed;color:var(--text-muted);">+ Add tag</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">YouTube Chapters (in description)</div>
+          <div class="chapters-preview">
+            <div class="chapter-ts-item">
+              <span class="chapter-ts-time">0:00</span>
+              <span class="chapter-ts-title">Introduction</span>
+              <span class="chapter-ts-edit">Edit</span>
+            </div>
+            <div class="chapter-ts-item">
+              <span class="chapter-ts-time">1:12</span>
+              <span class="chapter-ts-title">The Problem With Current Tools</span>
+              <span class="chapter-ts-edit">Edit</span>
+            </div>
+            <div class="chapter-ts-item">
+              <span class="chapter-ts-time">2:45</span>
+              <span class="chapter-ts-title">What I've Been Building</span>
+              <span class="chapter-ts-edit">Edit</span>
+            </div>
+            <div class="chapter-ts-item">
+              <span class="chapter-ts-time">4:02</span>
+              <span class="chapter-ts-title">The Style Model Explained</span>
+              <span class="chapter-ts-edit">Edit</span>
+            </div>
+            <div class="chapter-ts-item">
+              <span class="chapter-ts-time">5:30</span>
+              <span class="chapter-ts-title">Demo: First Edit</span>
+              <span class="chapter-ts-edit">Edit</span>
+            </div>
+            <div class="chapter-ts-item">
+              <span class="chapter-ts-time">7:18</span>
+              <span class="chapter-ts-title">How to Get Early Access</span>
+              <span class="chapter-ts-edit">Edit</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- meta-body -->
+    </div>
+
+    <!-- Right: Upload & Render -->
+    <div class="upload-panel">
+      <div class="panel-header">
+        <span class="panel-title">Destinations</span>
+      </div>
+
+      <div class="upload-body">
+
+        <!-- Render status -->
+        <div class="render-section">
+          <div class="render-title">
+            <div class="render-pulsedot"></div>
+            Background Render
+          </div>
+          <div class="render-item">
+            <div class="render-item-header">
+              <span class="render-item-name">main_video_4k.mp4</span>
+              <span class="render-item-status done">Done</span>
+            </div>
+            <div class="render-bar"><div class="render-fill done"></div></div>
+          </div>
+          <div class="render-item">
+            <div class="render-item-header">
+              <span class="render-item-name">short_01_58s.mp4</span>
+              <span class="render-item-status progress">67%</span>
+            </div>
+            <div class="render-bar"><div class="render-fill progress"></div></div>
+          </div>
+          <div class="render-item">
+            <div class="render-item-header">
+              <span class="render-item-name">short_02_43s.mp4</span>
+              <span class="render-item-status waiting">Queued</span>
+            </div>
+            <div class="render-bar"><div class="render-fill waiting"></div></div>
+          </div>
+        </div>
+
+        <div class="destinations-title">Upload To</div>
+
+        <!-- YouTube -->
+        <div class="dest-card active">
+          <div class="dest-header">
+            <div class="dest-logo" style="background: rgba(239,68,68,0.12); font-size: 16px;">▶</div>
+            <div>
+              <div class="dest-name">YouTube</div>
+              <div class="dest-account">@AnandRoraCreates</div>
+            </div>
+            <div class="dest-toggle">
+              <div class="toggle-switch on"><div class="toggle-knob"></div></div>
+            </div>
+          </div>
+          <div class="dest-options">
+            <div class="dest-opt"><div class="dest-opt-check">✓</div> Main video</div>
+            <div class="dest-opt"><div class="dest-opt-check">✓</div> Chapters</div>
+            <div class="dest-opt"><div class="dest-opt-check">✓</div> Captions</div>
+            <div class="dest-opt"><div class="dest-opt-check">✓</div> Thumbnail</div>
+            <div class="dest-opt"><div class="dest-opt-check">✓</div> Shorts (3)</div>
+            <div class="dest-opt"><div class="dest-opt-check off"></div> End screen</div>
+          </div>
+        </div>
+
+        <!-- Instagram -->
+        <div class="dest-card">
+          <div class="dest-header">
+            <div class="dest-logo" style="background: rgba(168,85,247,0.12); font-size: 14px;">📷</div>
+            <div>
+              <div class="dest-name">Instagram Reels</div>
+              <div class="dest-account">@AnandRora</div>
+            </div>
+            <div class="dest-toggle">
+              <div class="toggle-switch off"><div class="toggle-knob"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">Schedule</div>
+          <div class="schedule-row">
+            <span class="schedule-label">Publish</span>
+            <div class="schedule-val">Now</div>
+          </div>
+          <div class="schedule-row">
+            <span class="schedule-label">Visibility</span>
+            <div class="schedule-val">Public</div>
+          </div>
+          <div class="schedule-row">
+            <span class="schedule-label">Notify subs</span>
+            <div class="schedule-val">Yes</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Publish button -->
+      <div class="publish-btn-area">
+        <button class="publish-btn">
+          🚀 Publish Package
+          <span class="publish-btn-sub">· YouTube + 3 Shorts</span>
+        </button>
+        <div class="publish-status">
+          <span class="status-lock">🔒</span>
+          Local-first · your data stays on this machine
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

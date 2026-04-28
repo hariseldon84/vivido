@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vivido — Variant B: Cinematic Opener</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #050507;
+      --surface: #0d0d10;
+      --surface-2: #111116;
+      --border: #1c1c24;
+      --accent: #3B82F6;
+      --accent-dim: rgba(59, 130, 246, 0.1);
+      --accent-glow: rgba(59, 130, 246, 0.25);
+      --text-primary: #F8F8FC;
+      --text-secondary: #9CA3AF;
+      --text-muted: #4B5563;
+    }
+
+    html { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-primary); }
+    body { min-height: 100vh; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 56px;
+      background: transparent;
+    }
+    .nav-logo {
+      font-size: 17px; font-weight: 700; letter-spacing: -0.4px;
+      color: var(--text-primary);
+    }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-link { font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; }
+    .nav-link:hover { color: var(--text-primary); }
+    .nav-pill {
+      font-size: 12px; font-weight: 600; color: #fff;
+      background: var(--accent); border: none; border-radius: 100px;
+      padding: 6px 16px; cursor: pointer; text-decoration: none;
+    }
+
+    /* CINEMATIC HERO */
+    .hero {
+      min-height: 100vh;
+      position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Film grain texture via CSS noise */
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 100% 80% at 50% 0%, rgba(20,20,30,0.95) 0%, rgba(5,5,7,0.98) 60%, rgba(5,5,7,1) 100%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.07'/%3E%3C/svg%3E");
+      background-size: cover, 200px 200px;
+    }
+
+    /* Blue glow from top */
+    .hero-glow {
+      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 600px;
+      background: radial-gradient(ellipse, rgba(59,130,246,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Horizontal blue lines — cinematic scanlines */
+    .hero-lines {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        transparent 3px,
+        rgba(59,130,246,0.015) 3px,
+        rgba(59,130,246,0.015) 4px
+      );
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative; z-index: 1;
+      text-align: center;
+      max-width: 760px; padding: 0 32px;
+    }
+
+    .hero-eyebrow {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+    }
+    .hero-eyebrow::before, .hero-eyebrow::after {
+      content: ''; flex: 1; max-width: 60px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.5));
+    }
+    .hero-eyebrow::after { transform: scaleX(-1); }
+
+    .hero-headline {
+      font-size: clamp(56px, 8vw, 96px);
+      font-weight: 900;
+      letter-spacing: -4px;
+      line-height: 0.92;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .hero-headline .line-2 {
+      color: transparent;
+      -webkit-text-stroke: 1.5px rgba(248, 248, 252, 0.35);
+    }
+
+    .hero-subhead {
+      font-size: 17px; font-weight: 400; color: var(--text-secondary);
+      line-height: 1.65; max-width: 480px;
+      margin: 0 auto 44px;
+      font-style: italic;
+    }
+    .hero-subhead strong { font-style: normal; font-weight: 600; color: var(--text-primary); }
+
+    .hero-cta-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .btn-hero {
+      font-size: 15px; font-weight: 700; color: #fff;
+      background: var(--accent);
+      border: none; border-radius: 8px;
+      padding: 14px 36px; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: 0 0 32px rgba(59,130,246,0.3);
+      transition: box-shadow 0.2s, transform 0.1s;
+    }
+    .btn-hero:hover { box-shadow: 0 0 48px rgba(59,130,246,0.45); transform: translateY(-1px); }
+    .hero-cta-note { font-size: 12px; color: var(--text-muted); }
+
+    /* FILM STRIP DECORATIVE */
+    .film-strip {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; overflow: hidden;
+    }
+    .film-holes {
+      display: flex; gap: 0;
+      padding: 0 16px;
+    }
+    .film-hole {
+      width: 14px; height: 14px; border-radius: 2px;
+      background: var(--bg); border: 1px solid var(--border);
+      margin-right: 8px; flex-shrink: 0;
+    }
+
+    /* FEATURES ROW */
+    .feature-row {
+      padding: 80px 48px;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .feature-row-header {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 48px;
+    }
+    .feature-row-header h2 {
+      font-size: 14px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .feature-row-header::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .features-3 {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    }
+    .feat {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px;
+      transition: border-color 0.2s;
+    }
+    .feat:hover { border-color: rgba(59,130,246,0.3); }
+    .feat-num {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px;
+    }
+    .feat-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.3px; }
+    .feat-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+
+    /* CINEMATIC STAT BAR */
+    .stat-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 32px 48px;
+      display: flex; align-items: center; justify-content: center; gap: 64px;
+    }
+    .stat { text-align: center; }
+    .stat-val { font-size: 36px; font-weight: 900; color: var(--text-primary); letter-spacing: -2px; }
+    .stat-val span { color: var(--accent); }
+    .stat-desc { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+
+    /* QUOTE SECTION */
+    .quote-section {
+      padding: 80px 48px; text-align: center; max-width: 700px; margin: 0 auto;
+    }
+    .quote-marks { font-size: 80px; color: var(--border); line-height: 1; margin-bottom: -20px; }
+    .quote-text {
+      font-size: 22px; font-weight: 300; font-style: italic;
+      color: var(--text-secondary); line-height: 1.6;
+    }
+    .quote-text strong { font-style: normal; font-weight: 700; color: var(--text-primary); }
+    .quote-source { font-size: 12px; color: var(--text-muted); margin-top: 20px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+    /* PRICING TEASER */
+    .pricing-teaser {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; max-width: 600px; margin: 0 auto 80px;
+      padding: 40px; text-align: center;
+    }
+    .pricing-teaser h3 { font-size: 24px; font-weight: 800; letter-spacing: -0.8px; margin-bottom: 8px; }
+    .pricing-teaser p { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; }
+    .pricing-teaser .price {
+      font-size: 48px; font-weight: 900; letter-spacing: -2px;
+      color: var(--text-primary);
+    }
+    .pricing-teaser .price-note { font-size: 13px; color: var(--text-muted); }
+    .pricing-teaser .price-compare { font-size: 12px; color: var(--text-secondary); margin: 8px 0 24px; }
+    .pricing-teaser .price-compare s { color: var(--text-muted); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer p { font-size: 12px; color: var(--text-muted); }
+
+    .variant-label {
+      position: fixed; bottom: 16px; right: 16px; z-index: 1000;
+      background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      padding: 6px 12px; border-radius: 4px; text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">vivido</div>
+    <div class="nav-right">
+      <a href="#" class="nav-link">Features</a>
+      <a href="#" class="nav-link">Pricing</a>
+      <a href="#" class="nav-pill">Start Editing Free →</a>
+    </div>
+  </nav>
+
+  <!-- CINEMATIC HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-lines"></div>
+
+    <div class="hero-content">
+      <div class="hero-eyebrow">The editor that learns you</div>
+      <h1 class="hero-headline">
+        Pro Filmmaking.<br />
+        <span class="line-2">Any Platform.</span>
+      </h1>
+      <p class="hero-subhead">
+        The first editor that <strong>accumulates your editorial taste.</strong>
+        Local-first. Windows + Mac. No tool switching. No FCP complexity.
+      </p>
+      <div class="hero-cta-wrap">
+        <a href="#" class="btn-hero">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Start Editing Free
+        </a>
+        <span class="hero-cta-note">Windows + macOS · No account required to start</span>
+      </div>
+    </div>
+
+    <div class="film-strip">
+      <div class="film-holes">
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAT BAR -->
+  <div class="stat-bar">
+    <div class="stat">
+      <div class="stat-val">4<span>K</span></div>
+      <div class="stat-desc">Instant Playback</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">0</div>
+      <div class="stat-desc">Tool Switches</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">&lt;<span>60</span>s</div>
+      <div class="stat-desc">10-min Transcription</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">1</div>
+      <div class="stat-desc">Click Publish Package</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="feature-row">
+    <div class="feature-row-header"><h2>What it does</h2></div>
+    <div class="features-3">
+      <div class="feat">
+        <div class="feat-num">01 · Local-first</div>
+        <h3 class="feat-title">Your footage never leaves your machine</h3>
+        <p class="feat-desc">Everything you edit stays on disk. No upload required to start. Cloud sync is optional, additive, yours to control.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-num">02 · Style Model</div>
+        <h3 class="feat-title">The editor that accumulates taste</h3>
+        <p class="feat-desc">Every project teaches Vivido how you cut. By project 5, it surfaces insights. By project 20, it pre-stages your rough cut. Zero churn at 20+ projects.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-num">03 · YouTube-Native</div>
+        <h3 class="feat-title">Chapters, Shorts, and End Screens in the timeline</h3>
+        <p class="feat-desc">No more exporting then going to YouTube Studio. Mark chapters as you edit. Export a Publish Package: MP4 + Shorts + thumbnails + chapters.txt.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUOTE -->
+  <div class="quote-section">
+    <div class="quote-marks">"</div>
+    <p class="quote-text">
+      FCP is too complex and it's <strong>Mac-only</strong>. I just want
+      pro cinema-grade output without the film-school learning curve.
+    </p>
+    <p class="quote-source">— The pain that started Vivido · heard from 5 creators independently</p>
+  </div>
+
+  <!-- PRICING TEASER -->
+  <div style="padding: 0 48px;">
+    <div class="pricing-teaser">
+      <h3>One price. Full editor.</h3>
+      <p>No watermarks on free tier. No beginner mode. Full 4K editing from day one. Upgrade when the AI features earn it.</p>
+      <div class="price">$199<span style="font-size:20px;font-weight:400;color:var(--text-muted)">/yr</span></div>
+      <p class="price-compare">vs Premiere Pro <s>$660/yr</s> · CapCut ban → no replacement</p>
+      <p class="price-compare">Or <strong>$599 Lifetime</strong> · launch window only</p>
+      <a href="#" class="btn-hero" style="display:inline-flex;">Download Free & Upgrade Later</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2026 Vivido. vivido.app</p>
+    <p style="font-size:12px;color:var(--text-muted)">Privacy · Terms · Changelog</p>
+  </footer>
+
+  <div class="variant-label">Variant B — Cinematic Opener</div>
+</body>
+</html>
