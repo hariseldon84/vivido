@@ -422,7 +422,7 @@ Support accesses project metadata (never raw files, never without consent). Sour
 - **FR29:** Vivido warns the creator when a Shorts-marked clip is horizontal (16:9) and shows a crop preview before export.
 - **FR30:** Creator can add End Screen zones and Info Card timestamps as timeline objects.
 - **FR31:** Creator can generate a Publish Package with a single action — outputting: main MP4 with embedded chapter metadata, auto-cropped 9:16 Shorts clips, 3 thumbnail candidate frames, `chapters.txt`, `captions_en.srt`.
-- **FR32:** Creator can directly upload to YouTube from within Vivido (authenticated via OAuth) including title, description, tags, and chapter injection.
+- **FR32:** Creator can directly upload to YouTube from within Vivido (authenticated via OAuth) including title, description, tags, and chapter injection. YouTube access tokens refreshed automatically if <5 minutes to expiry before upload begins. If refresh token is expired (>6 months inactive), creator sees a re-auth prompt — never a silent upload failure.
 - **FR33:** Creator can share a review link for a project that opens in a browser without Vivido installed.
 
 ### Recording & Capture (Stage 2)
@@ -469,7 +469,7 @@ Support accesses project metadata (never raw files, never without consent). Sour
 
 ### GPU Decode & Performance (added from CEO review)
 
-- **FR-61 (Software decode fallback):** When VideoToolbox (Mac) or NVDEC/D3D11VA (Windows) is unavailable (no qualifying hardware, VM, AMD APU without hardware decode), Vivido falls back to FFmpeg CPU decode with frame limiting to prevent UI stalls. A "Performance mode" indicator is shown in the top titlebar. 4K scrubbing is functional but slower. Creator is never shown a crash or an unsupported screen without a working path.
+- **FR-61 (Software decode fallback):** When hardware decode is unavailable, Vivido falls back to FFmpeg CPU decode with frame limiting. Windows fallback chain: NVDEC (NVIDIA) → D3D11VA (Intel/AMD) → CPU. Mac fallback chain: VideoToolbox → CPU. A "Performance mode" indicator is shown in the top titlebar. 4K scrubbing is functional but slower. Creator is never shown a crash or an unsupported screen without a working path. All four decode paths validated in CI.
 
 ### Whisper Model Management (added from CEO review)
 
@@ -493,8 +493,8 @@ Support accesses project metadata (never raw files, never without consent). Sour
 | Audio processing (noise + LUFS) | < 5% of audio duration | On minimum spec |
 | Publish Package export | < 2× real-time | 10-min video < 20 min, min spec |
 | All editing UI interactions | < 100ms response | Cuts, trims, scrub, transcript edits |
-| Auto-save background write | < 50ms | No perceptible UI impact |
-| Timeline data model | 90+ min, 500+ clips | No performance degradation |
+| Auto-save background write | < 50ms UI blocking | Write runs on background thread — total write time may exceed 50ms on rotational disk, UI never stalls |
+| Timeline data model | 90+ min, 500+ clips | No performance degradation — requires virtual scrolling (react-window or @tanstack/virtual); test before sprint 9 |
 
 **Minimum spec (hardware decode):** GPU with hardware video decode (NVDEC/D3D11VA on Windows, VideoToolbox on Mac, 2018+), 8GB RAM, 50GB free disk.
 **Minimum spec (software decode fallback):** Any CPU with AVX2 support, 8GB RAM, 50GB free disk. "Performance mode" activated — 4K functional, slower scrubbing.
@@ -507,6 +507,8 @@ Support accesses project metadata (never raw files, never without consent). Sour
 - **Electron hardening:** `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, no remote module, CSP configured for renderer
 - **IPC security:** All renderer↔native messages validated against typed schemas. No eval. No dynamic code execution over IPC.
 - **Credential handling:** No API keys ever in the renderer process. YouTube OAuth tokens encrypted in Supabase — never in localStorage. Stripe/Razorpay card data never touches Vivido servers.
+- **Payment webhooks:** Stripe and Razorpay webhook endpoints handled by Supabase Edge Functions with HMAC signature verification. Webhook secrets stored as Supabase environment variables — never in client-accessible config or the renderer process.
+- **Electron CSP (renderer):** Content Security Policy required from sprint 1. Minimum policy: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:;` — `blob:` required for video preview canvas. CSP string committed to code, not deferred to deployment config.
 - **Creator data isolation:** No creator can access another creator's project data, style model, or media files.
 - **Creator footage:** Raw video files never leave the creator's machine unless they explicitly initiate an upload.
 
@@ -792,7 +794,7 @@ Write down the one moment in each session where they looked most frustrated. If 
 | 7–8 | Timeline: cuts, trims, splits, multi-track (2 video + 2 audio + caption track). Clip drag, snap guides, playhead. Keyboard shortcuts. |
 | 9–10 | YouTube-native primitives: Chapter markers, Shorts markers, End Screen zones as first-class timeline objects. Shorts crop preview + horizontal source warning. |
 | 11–12 | Audio Room: AI noise removal, parametric EQ, compression, per-platform LUFS normalization. Stereo metering. Platform pass/warn/fail readouts. |
-| 13–14 | Publish Package: main MP4 + Shorts 9:16 crops + 3 thumbnail candidates + `chapters.txt` + `captions_en.srt`. One-click export. |
+| 13–14 | Publish Package: main MP4 + Shorts 9:16 crops + 3 thumbnail candidates + `chapters.txt` + `captions_en.srt`. One-click export. **Render progress UI: percent complete, estimated time remaining, cancel button. If window is closed during render, render continues in background with system tray / menu bar status indicator.** |
 | 15–16 | Guest mode. Supabase Auth + Cloudflare R2. Style model passive init (JSON accumulator, projects 1–4). Frictionless account creation at "save style" moment only. Distribution prep: referral program, Product Hunt page, community presence. |
 | 17–18 | Windows + Mac simultaneous signed/notarized builds. GitHub Actions CI/CD. `electron-updater` delta patching. FFmpeg GPL CI gate. EU AI Act disclosure complete (built since sprint 1). Descript FTO cleared (completed in Pre-Sprint 0). |
 
@@ -886,10 +888,14 @@ This is the only metric that proves the style model is working.
 | 1 | Who are the 5 specific creators for the validation prototype? Real people who meet recruitment criteria above. | Validation gate (Pre-Sprint 0) | Anand | **This week** |
 | 2 | Patent provisionals #1 + #3 — attorney engaged and filing date confirmed? | **Any code shown to any creator.** Showing the prototype before filing = public disclosure = patent risk. | Anand + IP Counsel | **This week** |
 | 3 | Descript FTO review — attorney engaged? | **Validation prototype build.** FR15–FR17 (transcript-synced editing) cannot be built until FTO clears. | Anand + IP Counsel | **This week** |
-| 4 | RN monorepo: Nx vs Turborepo for sharing component library between Electron renderer + RN? | React Native companion app start | Eng | Before post-MLP |
+| 4 | **[ELEVATED — Before sprint 1]** RN component sharing boundary: what goes in `packages/ui/` (shared, cross-platform) vs `apps/desktop/` (Electron-only DOM components)? Every shared component written before this decision may need refactoring for React Native. Nx vs Turborepo is secondary — the boundary decision comes first. | **Sprint 1 start** | Eng | **Before sprint 1** |
 | 5 | Mobile compute routing: when RN companion requests a render, does it route to the desktop (if online) or AWS MediaConvert (cloud)? | Companion app ADR | Eng | Before post-MLP |
 | 6 | Whisper model tier default for MLP: Large v3 (1.5GB, highest accuracy) vs Medium (500MB, faster download)? | Sprint 5–6 model management implementation | Eng | Sprint 5 |
 | 7 | Hire 1–2 engineers post-validation gate: which roles first? Electron native (GPU decode, FFmpeg) or React frontend (timeline UI)? | Full MLP sprint velocity | Anand | Post-validation |
+| 8 | **`usePlatform()` interface design:** What is the request/response contract shape? How does it handle async native results? How does WASM fallback activate gracefully? How are in-flight requests cancelled? This is the most critical abstraction in the codebase — design before sprint 1, not during. | **Sprint 1 start** | Eng | **Before sprint 1** |
+| 9 | **IPC schema validation toolchain:** The PRD requires CI to block release on IPC schema violations. Name the toolchain before sprint 1. Recommendation: zod schemas in `src/ipc/contracts/` + generated JSON Schema for CI validation. | **Sprint 1–2 CI gate** | Eng | **Sprint 1** |
+| 10 | **Whisper integration method:** Node.js native addon (N-API, faster, couples to Electron ABI version) vs child_process IPC (simpler, slower startup, no Electron upgrade coupling). For a solo founder maintaining long-term, child_process is safer. Decide before sprint 5. | Sprint 5–6 | Eng | Sprint 4 |
+| 11 | **Style model sync conflict strategy:** When a creator edits on two machines, SQLite local state diverges from Supabase. Is the resolution last-write-wins (client timestamp) or server-authoritative? Decide before sprint 15 implementation begins. | Sprint 15 | Eng | Sprint 14 |
 
 ---
 
@@ -946,3 +952,24 @@ This section captures every decision made during the CEO /plan-ceo-review sessio
 | Win+Mac simultaneous launch | D17 | Keep simultaneous | Confirmed, no change |
 | Free tier entitlements | D18 | Unlimited projects + no AI features | Confirmed, already correct in PRD |
 | Style model moat framing | D19 | Reframe as switching-cost moat + patent legal layer + Stage 2 signal depth roadmap | Strategic framing updated throughout |
+
+---
+
+## Engineering Review Session — Decisions Log (2026-04-28)
+
+Gaps surfaced by /plan-eng-review that were written to this file.
+
+| Finding | Severity | Fix Applied |
+|---|---|---|
+| `usePlatform()` hook had no interface design | Critical | Added Open Question #8 (blocking sprint 1) |
+| IPC schema validation toolchain unnamed | Critical | Added Open Question #9 (blocking sprint 1–2) |
+| RN component sharing boundary mislabeled as post-MLP | Critical | Open Question #4 elevated to blocking before sprint 1 |
+| GPU fallback chain order not specified (NVDEC → D3D11VA → CPU) | High | FR-61 updated with explicit fallback chain |
+| Whisper integration method (N-API vs child_process) unresolved | High | Added Open Question #10 (blocking sprint 5) |
+| YouTube OAuth token refresh cycle not specified | High | FR32 updated with refresh behavior + expired token handling |
+| Local render progress UI missing from FRs | High | Sprint 13–14 deliverable updated with progress UI + cancel + background render |
+| Style model sync conflict strategy undefined | Medium | Added Open Question #11 (blocking sprint 14) |
+| Electron CSP policy string was a placeholder | Medium | Explicit CSP policy added to Security NFR |
+| Payment webhook verification location unspecified | Medium | Added to Security NFR: Supabase Edge Functions + HMAC verification |
+| Timeline virtualization not specified for 500+ clips | Medium | NFR performance table updated with react-window requirement |
+| Auto-save NFR ambiguous (UI blocking vs total write time) | Low | NFR clarified: <50ms UI blocking, background thread, rotational disk acceptable |

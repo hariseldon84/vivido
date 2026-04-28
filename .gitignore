@@ -30,3 +30,4 @@ release/
 # Supabase
 .supabase/
 EOF
+.gstack/
