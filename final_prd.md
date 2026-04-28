@@ -26,8 +26,8 @@ CapCut's January 2025 US ban displaced 264M+ users. No dominant replacement has 
 **The FCP complaint is the wedge.**
 Multiple independent creators said unprompted: "FCP is too complex and it's Mac-only." Same complaint, different people. Not coordinated. That's signal. The wedge: **pro-enough editing for ambitious creators who want FCP-grade outcomes without FCP-grade complexity or Apple lock-in.**
 
-**The moat is not features. It's accumulated editorial taste.**
-A style model that knows how YOU cut is the only defensible advantage that compounds over time. No competitor — FCP, Premiere, DaVinci, Descript — accumulates creator-specific intelligence across sessions. Vivido's moat activates at project 5, approaches zero churn at project 20+.
+**The moat is not features. It's switching cost compounded by accumulated editorial history.**
+No competitor — FCP, Premiere, DaVinci, Descript — accumulates creator-specific intelligence across sessions. The moat has two layers: (1) **Switching cost** — 20+ projects of calibrated style history that no competitor can import. Your editing patterns, hook structures, pacing decisions, audio choices are in Vivido and nowhere else. Replacing that takes 20+ more projects in the new tool. (2) **Legal layer** — Patent #1 protects the per-creator style model algorithm before any competitor can ship a clone. The data signals are behavioral metadata (cut durations, clip patterns, audio flags) — not secret sauce. The secret sauce is the algorithm that weights them and the legal protection around it. Moat activates at project 5, switching cost becomes prohibitive at project 20+.
 
 **Founder's unfair advantage:** Vivido is designed by someone who is simultaneously a trained filmmaker, director, cinematographer, and video editor — not a SaaS founder approximating creative workflows. Every product decision carries the judgment of someone who has lived inside the problem. Most founders have domain expertise or technical capability. This founder has both.
 
@@ -37,7 +37,7 @@ A style model that knows how YOU cut is the only defensible advantage that compo
 
 Vivido is an AI-native, OS-level video creation platform for YouTube creators, independent filmmakers, and agency/brand teams. It eliminates the 7-tool creator workflow — replacing Premiere, Opus Clip, Submagic, Riverside, iZotope RX, Loom, and the manual YouTube Studio post-export process — with a single native desktop application designed as a platform from day one.
 
-Every existing video editor treats every project as day one. Vivido is the first editor that learns. A per-creator style model accumulates across every project — hook structures, cut rhythms, B-roll patterns, audio treatment, pacing — and compounds into a creative intelligence that pre-stages rough cuts, suggests chapters, and identifies Shorts opportunities in the creator's own editorial voice.
+Every existing video editor treats every project as day one. Vivido is the first editor that learns. A per-creator style model accumulates across every project — hook structures, cut rhythms, B-roll patterns, audio treatment, pacing — and compounds into a creative intelligence that pre-stages rough cuts, suggests chapters, and identifies Shorts opportunities in the creator's own editorial voice. The moat is switching cost: 20+ projects of calibrated history that takes 6+ months to rebuild in any other tool. Patent #1 adds legal protection on top.
 
 **Target users:**
 - Solo YouTube creators on Windows (underserved by FCP, priced out of Premiere, displaced by CapCut ban)
@@ -242,14 +242,14 @@ Educators, enterprise B2B, Loom-replacement buyers, casual TikTok creators (shor
 
 ## The Style Model (The Moat)
 
-The style model is what makes Vivido defensible. Everything else can be copied.
+The style model is Vivido's primary switching-cost engine. The current data signals are behavioral metadata — not secret algorithms. The moat is the accumulation of 20+ projects of calibrated history that a creator would have to rebuild from scratch in any competitor. Patent #1 adds a legal layer on top of the switching cost. As the product matures, the signal depth grows (transcript vocabulary patterns, B-roll placement logic, audio envelope matching — Stage 2 roadmap) making the data harder to clone even if the algorithm were known.
 
 | Projects | State | What Vivido Does |
 |---|---|---|
 | 1–4 | Passive initialization | Silent JSON accumulator. Observes: cut frequency, average clip duration, caption density, B-roll patterns, audio treatment choices, hook length, Shorts cadence. No UI shown. No creator action needed. |
 | 5–9 | First surface | Shows creator 3 observations about their editing style. Requires confirmation — not assumed correct. No auto-suggestions yet. |
 | 10–19 | Active assistance | Pre-stages rough cut suggestions, auto-marks chapter boundaries, flags Shorts sections — in the creator's editorial voice. Presented for review, never auto-applied. |
-| 20+ | Deep personalization | Moat is closed. The style model knows this channel better than any editor you could hire. Hook structure, pacing, energy curves, audio fingerprint. Churn approaches zero. |
+| 20+ | Deep personalization | Switching cost is prohibitive. The style model holds 20+ projects of calibrated editorial history. Rebuilding that in a competitor costs the creator 6+ months of rework. Hook structure, pacing, energy curves, audio fingerprint — all tuned. Churn approaches zero not because the creator can't leave but because leaving is too expensive. |
 
 **What the style model stores:** Behavioral metadata only — cut durations, clip counts, audio treatment flags, chapter density, Shorts cadence. Never video content, transcripts, or PII about subjects in videos.
 
@@ -269,7 +269,7 @@ All provisionals filed before any public demo. The prototype is a public disclos
 | #4 | Adaptive Audio Normalization per Platform | Within 18 months of MLP launch | Stage 2 |
 | #5 | AI Rough Cut Pre-Visualization from Per-Creator Style Model | Within 18 months of Stage 2 launch | Stage 2 |
 
-**Freedom-to-operate review required before MLP launch:** Descript holds patents in transcript-synced video editing. FTO review must confirm no prior art conflict for FR15–FR17 (Whisper background transcription + word-level transcript edit synced to timeline). Implementation differentiation documented before launch. This is a legal blocker — treat it as such.
+**Freedom-to-operate review — Pre-Sprint 0, not at launch:** Descript holds patents in transcript-synced video editing. FTO review must confirm no prior art conflict for FR15–FR17 (Whisper background transcription + word-level transcript edit synced to timeline) **before the validation prototype is built.** Running FTO at sprint 17–18 means 9 months of development could be invalidated by a patent conflict. Engage IP counsel immediately. This is a legal blocker — the earlier it's resolved, the better.
 
 All novel style model algorithms documented with invention disclosure records before public release.
 
@@ -378,7 +378,7 @@ Support accesses project metadata (never raw files, never without consent). Sour
 
 ### Media Import & Playback
 
-- **FR1:** Creator can import video files (MP4, MOV, MKV, AVI, WebM, R3D, BRAW) via drag-and-drop or file browser without configuration.
+- **FR1:** Creator can import video files (MP4, MOV, MKV, AVI, WebM) via drag-and-drop or file browser without configuration. *(R3D and BRAW deferred to Stage 2 — filmmaker path. Adding them at MLP requires RED SDK licensing and BRAW decode testing across all target hardware; that scope kills the CapCut window.)*
 - **FR2:** Creator can import audio files (WAV, MP3, AAC, AIFF, FLAC) as standalone tracks.
 - **FR3:** Vivido plays imported footage at native resolution with hardware-accelerated decode immediately on import — no processing required before first frame.
 - **FR4:** Creator can scrub through footage at any position with frame-accurate seeking.
@@ -404,6 +404,7 @@ Support accesses project metadata (never raw files, never without consent). Sour
 - **FR18:** Creator can style captions (font, size, color, position, background, animation style) once and have the style applied to all captions in the project.
 - **FR19:** Creator can export captions as SRT or VTT alongside the video export.
 - **FR20:** Vivido detects and highlights low-confidence transcript words for creator review.
+- **FR-WL1 (Multi-language):** Whisper auto-detects the spoken language on transcription start. Creator can manually override the detected language from a dropdown of the top 20 languages by global creator market share. Detected language is visible in the transcript UI at all times.
 
 ### Audio Engineering
 
@@ -466,6 +467,18 @@ Support accesses project metadata (never raw files, never without consent). Sour
 - **FR59:** Vivido surfaces in-app feedback and bug reporting with automatic project metadata attachment (with creator consent).
 - **FR60:** Creator can opt in or out of anonymous product analytics from privacy settings at any time.
 
+### GPU Decode & Performance (added from CEO review)
+
+- **FR-61 (Software decode fallback):** When VideoToolbox (Mac) or NVDEC/D3D11VA (Windows) is unavailable (no qualifying hardware, VM, AMD APU without hardware decode), Vivido falls back to FFmpeg CPU decode with frame limiting to prevent UI stalls. A "Performance mode" indicator is shown in the top titlebar. 4K scrubbing is functional but slower. Creator is never shown a crash or an unsupported screen without a working path.
+
+### Whisper Model Management (added from CEO review)
+
+- **FR-62 (First-launch check):** On first launch, Vivido checks for the Whisper GGML model file in its app data directory. If the model is absent, the download flow begins immediately.
+- **FR-63 (Download progress UI):** Download progress is displayed: model size, downloaded amount, estimated time remaining. Creator can use the rest of the app (import footage, start editing) while the model downloads.
+- **FR-64 (Pending transcription state):** If footage is imported before the model download completes, the transcript area shows "Transcription pending — model downloading (X% complete)" — never a silent empty state.
+- **FR-65 (Resume on interruption):** If the download is interrupted (connection loss, process killed), it resumes from the last successful byte on next launch. Never re-downloads the full file.
+- **FR-66 (Disk-full error):** If the download fails due to insufficient disk space, Vivido shows an explicit error with the space required and a path to the system storage settings. Never silently fails.
+
 ---
 
 ## Non-Functional Requirements
@@ -483,7 +496,8 @@ Support accesses project metadata (never raw files, never without consent). Sour
 | Auto-save background write | < 50ms | No perceptible UI impact |
 | Timeline data model | 90+ min, 500+ clips | No performance degradation |
 
-**Minimum spec:** GPU with hardware video decode (NVDEC or equivalent, 2018+), 8GB RAM, 50GB free disk.
+**Minimum spec (hardware decode):** GPU with hardware video decode (NVDEC/D3D11VA on Windows, VideoToolbox on Mac, 2018+), 8GB RAM, 50GB free disk.
+**Minimum spec (software decode fallback):** Any CPU with AVX2 support, 8GB RAM, 50GB free disk. "Performance mode" activated — 4K functional, slower scrubbing.
 **Recommended spec:** Dedicated GPU (NVIDIA RTX 3060 or Apple M1+), 16GB RAM, NVMe SSD.
 
 ### Security
@@ -587,7 +601,9 @@ Support accesses project metadata (never raw files, never without consent). Sour
 
 ---
 
-## Desktop Distribution
+## Distribution & Growth
+
+### Desktop App Distribution (Technical)
 
 **Signed and notarized binaries via GitHub Releases.**
 - `electron-updater` for delta updates (patches only download the diff)
@@ -601,6 +617,46 @@ Support accesses project metadata (never raw files, never without consent). Sour
 - App Store (iOS) + Google Play (Android)
 - TestFlight / Android internal testing for beta creators
 - GitHub Actions + Fastlane for signing and submission
+
+**Steam (Stage 2 — 3 months post-MLP):**
+- Windows and Mac builds submitted to Steam after MLP stabilizes
+- $100 one-time submission fee, 30% revenue share
+- Steam handles discovery, update delivery, and Windows-first audience reach
+- Existing Creator subscribers link their Vivido account — purchases via vivido.app skip Steam's 30% cut
+
+### Creator Acquisition (How Creators Find Vivido)
+
+**1. Validation creators as launch amplifiers (highest ROI)**
+The 5 validation creators have audiences of their own. After using Vivido on 3 real videos, the founders asks each one: "Would you post honestly about this?" Not a paid partnership — an honest creator story. One creator with 50K subscribers posting a genuine "I switched my editing workflow" video is worth 10,000 cold impressions.
+
+**2. Built-in referral program (in-app, launches with MLP)**
+- Creator earns 1 month free per confirmed referral (3 referrals = 3 months free)
+- Referred creator gets 30 days free Creator tier before paywall
+- Referral link generated from account settings — no separate affiliate dashboard
+- Powered by Stripe billing credits, no custom billing infrastructure
+
+**3. Product Hunt launch (MLP day 1)**
+- Submit Vivido on Product Hunt on MLP release day
+- Hunter: founder personal account or well-networked creator community member
+- Target: #1 Product of the Day. Realistic: top 5 if preparation is done right
+- Preparation: gallery screenshots from the 4 locked UI screens, video demo edited in Vivido, genuine reviews from validation creators posted simultaneously
+
+**4. Community presence (starts during validation, not at launch)**
+- r/editors, r/youtubers, r/premiere (CapCut refugees thread), r/VideoEditing
+- Founder participates genuinely — answers questions, shares workflow insights — before Vivido exists publicly
+- At launch: "I built this because of discussions like this one" — not a spam drop
+
+**5. Build in public on YouTube (starts immediately)**
+The founder is a trained filmmaker + YouTube creator. This is an asymmetric distribution asset that no competitor has.
+- Document building Vivido on the founder's YouTube channel — using Vivido's own tools to edit videos about Vivido
+- Target: 10 videos by MLP launch, each with genuine workflow demonstration (not a product pitch)
+- The audience follows a creator who uses these tools; they convert when the product launches
+- The "editing Vivido with Vivido" loop becomes the most compelling product demo possible — authentic, recursive, impossible to fake
+
+**6. Influencer / creator outreach (Stage 2)**
+- After MLP is stable and has ≥ 500 active weekly creators, approach mid-tier YouTube creators (100K–1M subscribers) with a genuine "we think you'd love this" offer
+- Not paid promotion — free Creator tier in exchange for an honest review
+- Target: 3 creators who cover tech/creator tools, 3 who are in the target audience (general YouTubers)
 
 ---
 
@@ -656,38 +712,89 @@ The native runtime is host-agnostic from day one: today Electron, tomorrow headl
 
 ---
 
-## Build Order (Phased)
+## Team
 
-### Before Writing a Single Line of Electron Code — Validation Prototype
+**Validation prototype phase (Pre-Sprint 0 through week 8): Founder solo.**
+The prototype is small (transcript editing + Publish Package), high-uncertainty (direction may change based on creator feedback), and requires no coordination overhead. Moving fast is more important than moving together. Solo founder is the right call.
 
-**2–4 weeks. Hard gate.**
+**Full MLP phase (Sprint 1–18): Founder + 1–2 engineers post-validation gate.**
+Hiring trigger: ≥ 3 of 5 validation creators say "I'd pay for this today." Start hiring conversations before the gate — have candidates ready. Time-to-hire adds 2–4 weeks after the gate passes.
 
-Build: transcript editing + creator presets + Publish Package. No GPU timeline. No Audio Room. Show to **5 specific creators — real people, callable tomorrow**. Have them use it on 3 real videos each.
+**Priority roles (in order):**
+1. **Electron native engineer** — GPU decode pipeline (FFmpeg + VideoToolbox + NVDEC), native IPC, file I/O, Whisper.cpp integration. This is the hardest and most blocking work in the MLP. Hire first.
+2. **React frontend engineer** — Timeline UI, transcript view, Audio Room UI, Publish Package UI. Shares the React component library with the future React Native companion app. Hire second.
 
-**Gate criteria:**
-- ≥ 3 of 5 say "I'd pay for this today" → demand confirmed, proceed to full MLP
-- They say it feels unserious without GPU playback → jaw-drop confirmed as necessary, full MLP scope justified
-- All 5 have different frustrations → target user less uniform than assumed; narrow before building
-
-Write down the one moment in each session where they looked most frustrated. If all 5 share a similar moment, that moment is the opening 10 minutes of the MLP demo.
-
-**Patent provisionals #1 and #3 must be filed before this prototype is shown to anyone. The prototype is a public disclosure.**
+**If founder-solo through MLP (timeline risk accepted):** Add 8–12 sprints to the MLP timeline. 26–30 sprints total (~52–60 weeks). Sole engineering dependency is a critical business risk — mitigate with detailed documentation from sprint 1.
 
 ---
 
-### Phase 1: MLP — Months 1–9 (2–3 Engineers)
+## Build Order (Phased)
+
+### Pre-Sprint 0 — Legal + Validation Gate (Weeks 0–4, Founder Solo)
+
+**All three items must complete before any code is shown to creators. These run in parallel.**
+
+| Item | Owner | Gate |
+|---|---|---|
+| Descript FTO review | Founder + IP counsel | Clears FR15–FR17 (transcript-synced editing) before validation prototype is shown |
+| Patent provisional #1 — Per-Creator Style Model | Founder + IP counsel | Filed before any creator sees the prototype |
+| Patent provisional #3 — Cross-Project Hook Intelligence | Founder + IP counsel | Filed before any creator sees the prototype |
+| Validation creator recruitment (5 confirmed, criteria below) | Founder | 5 yes commitments secured before prototype build begins |
+
+**Cost estimate:** FTO review $3,000–8,000. Provisional filings $2,000–4,000 each. Engage counsel immediately.
+
+**Validation creator recruitment criteria:**
+- Windows creator (not Mac-first — FCP-already handles them)
+- 10K–200K subscribers (engaged, not massive)
+- Currently paying for ≥ 2 tools Vivido replaces (validates cost pain)
+- Has expressed frustration with current workflow on record (tweet, video, Discord — not just "interested")
+- Available to use Vivido on 3 real videos within 30 days
+
+**Outreach order:** Warm intros first (creators in founder's existing network), direct message to creators the founder has publicly engaged with, then creator communities (r/editors, r/youtubers). Target: 5 yes commitments within the 2–4 week legal window — zero dead time.
+
+
+---
+
+### Validation Prototype — Weeks 4–8 (Founder Solo)
+
+**2–4 weeks of build. Hard gate.**
+
+Build: transcript editing + creator presets + Publish Package. No GPU timeline. No Audio Room. Stripped-down UI — functional, not the full MLP design system.
+
+Show to **5 specific creators — confirmed above**. Have them use it on 3 real videos each.
+
+**Gate criteria:**
+- ≥ 3 of 5 say "I'd pay for this today" → demand confirmed, proceed to full MLP, begin hiring
+- They say it feels unserious without GPU playback → jaw-drop confirmed as necessary, full MLP scope justified
+- All 5 have different frustrations → target user less uniform than assumed; narrow before building
+
+**Telemetry for the validation prototype (local-only, opt-in on first launch, no cloud send):**
+- Sessions started
+- Transcript edits made (word deletions)
+- Publish Package exports completed
+- Session duration
+
+Founder reviews the telemetry file with each creator after each session. If creators are completing exports, the prototype is working. If they're starting sessions but not finishing, it's a UX issue.
+
+Write down the one moment in each session where they looked most frustrated. If all 5 share a similar moment, that moment is the opening 10 minutes of the MLP demo.
+
+**Note:** Hire 1–2 engineers after validation gate passes. Adjust MLP sprint velocity to actual team size at hire date.
+
+---
+
+### Phase 1: MLP — Months 2–11 (Founder + 1–2 Engineers Post-Validation)
 
 | Sprint | Deliverable |
 |---|---|
-| 1–2 | Electron shell + React + Vite hot reload. Project file format (JSON) spec published. Validation prototype shown to 5 creators — go/no-go before sprint 3. |
-| 3–4 | FFmpeg native subprocess integration. VideoToolbox (Mac) + NVDEC (Windows) GPU decode. 4K playback working. Hardware decode validated on minimum spec. |
-| 5–6 | Whisper.cpp background transcription on import. Transcript view (word-level, real-time sync to timeline). Filler word detection. Confidence scoring. |
+| 1–2 | Electron shell + React + Vite hot reload. Project file format (JSON) spec published. EU AI Act disclosure + AI Trust Settings scaffold in place from sprint 1 (not sprint 17). |
+| 3–4 | FFmpeg native subprocess integration. VideoToolbox (Mac) + NVDEC (Windows) GPU decode. 4K playback working. Hardware decode validated on minimum spec. **Software decode fallback (FR-61): FFmpeg CPU decode with frame limiting activates when hardware decode is unavailable — "Performance mode" indicator shown to creator.** |
+| 5–6 | Whisper.cpp background transcription on import. **First-launch model download flow (FR-62–FR-66): progress UI with size + ETA, resume on interruption, import-while-downloading state, disk-full error, model tier selection (Large v3 vs Base). Multi-language: auto-detect + manual override (top 20 languages by creator market share).** Filler word detection. Confidence scoring. |
 | 7–8 | Timeline: cuts, trims, splits, multi-track (2 video + 2 audio + caption track). Clip drag, snap guides, playhead. Keyboard shortcuts. |
 | 9–10 | YouTube-native primitives: Chapter markers, Shorts markers, End Screen zones as first-class timeline objects. Shorts crop preview + horizontal source warning. |
 | 11–12 | Audio Room: AI noise removal, parametric EQ, compression, per-platform LUFS normalization. Stereo metering. Platform pass/warn/fail readouts. |
 | 13–14 | Publish Package: main MP4 + Shorts 9:16 crops + 3 thumbnail candidates + `chapters.txt` + `captions_en.srt`. One-click export. |
-| 15–16 | Guest mode. Supabase Auth + Cloudflare R2. Style model passive init (JSON accumulator, projects 1–4). Frictionless account creation at "save style" moment only. |
-| 17–18 | Windows + Mac simultaneous signed/notarized builds. GitHub Actions CI/CD. `electron-updater` delta patching. EU AI Act disclosure + AI Trust Settings. FFmpeg GPL CI gate. Descript FTO review complete. |
+| 15–16 | Guest mode. Supabase Auth + Cloudflare R2. Style model passive init (JSON accumulator, projects 1–4). Frictionless account creation at "save style" moment only. Distribution prep: referral program, Product Hunt page, community presence. |
+| 17–18 | Windows + Mac simultaneous signed/notarized builds. GitHub Actions CI/CD. `electron-updater` delta patching. FFmpeg GPL CI gate. EU AI Act disclosure complete (built since sprint 1). Descript FTO cleared (completed in Pre-Sprint 0). |
 
 **MLP gate before public launch:** A creator completes a project start-to-finish in Vivido with zero tool switches, in < 40% of their previous workflow time.
 
@@ -702,6 +809,7 @@ Write down the one moment in each session where they looked most frustrated. If 
 - **Advanced Audio Room** — Multitrack EQ, compression, music/VO balance presets by content type.
 - **B-roll suggestion** — Claude API generates B-roll placement suggestions from transcript context.
 - **React Native companion app** — Project sync, remote clip review, Shorts preview, push to YouTube from phone. No mobile encoding.
+- **FCP XML importer** — Import Final Cut Pro project structure (clip references, cut points, markers, basic transitions) into the Vivido timeline. Enables Mac creators switching from FCP to migrate existing projects. FCP XML is an open format. 80% fidelity goal — removes the switching objection for the wedge user.
 
 **Phase 2 gate:** 1,000 active weekly creators, $50K ARR, style model data from ≥ 5,000 completed projects.
 
@@ -756,10 +864,10 @@ This is the only metric that proves the style model is working.
 
 | Risk | Mitigation |
 |---|---|
-| EU AI Act non-compliance at launch | AI Trust Settings + disclosure UI are MLP blockers — sprint 17–18 |
-| CapCut window closes before MLP ships | Hard deadline: 9 months. Scope cut from MLP before deadline slips. |
-| Descript transcript-editing patent conflict | FTO review before MLP launch (sprint 17–18). Implementation differentiation documented. Legal blocker. |
-| Native GPU pipeline underperforms on min spec | Test on minimum spec hardware from sprint 3. Degrade to 1080p preview if 4K stutters — no software 4K fallback. |
+| EU AI Act non-compliance at launch | AI Trust Settings + disclosure UI scaffold built from sprint 1 — not sprint 17. Full enforcement: August 2026. |
+| CapCut window closes before MLP ships | Hard deadline: 9 months from validation gate pass. Scope cut from MLP before deadline slips. |
+| Descript transcript-editing patent conflict | **FTO review completed in Pre-Sprint 0 — before validation prototype is built.** Not sprint 17–18. Implementation differentiation documented. Legal blocker if unresolved. |
+| Native GPU pipeline underperforms on min spec | Test on minimum spec hardware from sprint 3. **Software decode fallback (FR-61) activates on unsupported hardware — creator sees "Performance mode" indicator, not a crash.** |
 | Style model cold start — insufficient data at project 5 | Instrument from day 1 in beta. If < 3 accurate observations by project 5, re-evaluate model before launch. |
 | Whisper accuracy on accented speech | Ship with confidence indicator. Allow manual correction. Never block export on low confidence. |
 | YouTube API quota exhaustion | Per-creator quota tracking, graceful degradation, 30-day cache, daily budget allocation. |
@@ -767,7 +875,7 @@ This is the only metric that proves the style model is working.
 | Style model data loss pre-auth | Local backup to OS app data dir. Cloud sync prompt after project 1 completion. |
 | Recording consent legal exposure (Stage 2) | Jurisdiction detection + non-dismissible consent notice. Legal review before Stage 2 ships. |
 | Stripe India RBI friction | Razorpay as India primary. Both paths tested before launch. |
-| Open-source style model replication (2–3 years) | Patents #1 + #3 filed before replication is possible. Data asset compounds ahead of any replicator. |
+| Open-source style model replication (2–3 years) | Patents #1 + #3 filed before replication is possible. The algorithm is patented; the data is accumulated switching cost. A clone can copy the algorithm after patent expiry but cannot clone 20+ projects of calibrated creator history. Both layers needed. |
 
 ---
 
@@ -775,12 +883,13 @@ This is the only metric that proves the style model is working.
 
 | # | Question | Blocking | Owner | Urgency |
 |---|---|---|---|---|
-| 1 | Who are the 5 specific creators for the validation prototype? Real people, callable now. | Validation gate (before sprint 3) | Anand | This week |
-| 2 | Patent provisionals #1 + #3 — attorney and filing date confirmed? | Any public demo or prototype showing | Anand + Legal | Before prototype |
-| 3 | Descript FTO review — attorney engaged? | MLP launch (sprint 17–18) | Anand + Legal | Sprint 1 |
+| 1 | Who are the 5 specific creators for the validation prototype? Real people who meet recruitment criteria above. | Validation gate (Pre-Sprint 0) | Anand | **This week** |
+| 2 | Patent provisionals #1 + #3 — attorney engaged and filing date confirmed? | **Any code shown to any creator.** Showing the prototype before filing = public disclosure = patent risk. | Anand + IP Counsel | **This week** |
+| 3 | Descript FTO review — attorney engaged? | **Validation prototype build.** FR15–FR17 (transcript-synced editing) cannot be built until FTO clears. | Anand + IP Counsel | **This week** |
 | 4 | RN monorepo: Nx vs Turborepo for sharing component library between Electron renderer + RN? | React Native companion app start | Eng | Before post-MLP |
 | 5 | Mobile compute routing: when RN companion requests a render, does it route to the desktop (if online) or AWS MediaConvert (cloud)? | Companion app ADR | Eng | Before post-MLP |
-| 6 | Whisper model default: Large v3 (1.5GB, better accuracy) vs Medium (500MB, faster)? | Sprint 5–6 | Eng | Sprint 5 |
+| 6 | Whisper model tier default for MLP: Large v3 (1.5GB, highest accuracy) vs Medium (500MB, faster download)? | Sprint 5–6 model management implementation | Eng | Sprint 5 |
+| 7 | Hire 1–2 engineers post-validation gate: which roles first? Electron native (GPU decode, FFmpeg) or React frontend (timeline UI)? | Full MLP sprint velocity | Anand | Post-validation |
 
 ---
 
@@ -798,12 +907,42 @@ These four points from the gstack review are the "why" behind the conviction. Re
 
 ---
 
-## Next Action
+## Next Actions — This Week (All Three Run in Parallel)
 
-**Name the 5 creators for the validation prototype. Call them this week. Not to pitch — to watch.**
+**1. Engage IP counsel.**
+Start FTO review (Descript patent risk on transcript-synced editing) + provisional filings for Patent #1 (style model) and Patent #3 (hook intelligence). Budget: $7K–16K total. Nothing else in the build plan starts before this is confirmed.
 
-Ask them to screen-share their last video edit session. Watch where they switch tools, where they stop, where they redo work. One hour each. Five hours total.
+**2. Name 5 validation creators.**
+Apply the recruitment criteria above. Warm intros first. Target: 5 yes commitments secured within 2 weeks. These 5 people determine whether the product is directionally correct. They are the most important decision made this week.
 
-Write down the one moment in each session where they looked most frustrated. That moment is the opening 10 minutes of the MLP demo.
+**3. Start building in public.**
+Record the first YouTube video on the founder's channel: "I'm building the video editor I've always needed." Use the current toolchain (Riverside + FCP or whatever exists now) to make this video. The first episode doesn't need Vivido — it needs the founder's voice and the story. Everything else in distribution follows from this one video.
 
-*Everything else in this document follows from that call list.*
+*The sprint clock starts when patent filings are confirmed and creators are scheduled. Not before.*
+
+---
+
+## CEO Review Session — Decisions Log (2026-04-28)
+
+This section captures every decision made during the CEO /plan-ceo-review session. All items written to this file only — nothing stored externally.
+
+| Decision | ID | Selected | PRD Impact |
+|---|---|---|---|
+| GPU software decode fallback | D2 | Add FR-61: SW decode fallback with "Performance mode" indicator | Added to FR list + sprint 3-4 |
+| Whisper model download UX | D3 | Add FR-62 through FR-66: full model download flow spec | Added to FR list + sprint 5-6 |
+| Descript FTO timing | D4 | Move to Pre-Sprint 0 (not sprint 17-18) | Updated sprint table, risk table, patent section, open questions |
+| Patent provisionals sequencing | D5 | Fix: filings before validation prototype, not after | Pre-Sprint 0 gate added |
+| Team hiring sequence | D6 | Founder solo through validation, hire Electron engineer first | Team section added |
+| Validation creator criteria | D7 | Add recruitment spec to PRD | Added to Validation Prototype section |
+| Prototype telemetry | D8 | Minimal behavioral telemetry (sessions, edits, exports, duration) | Added to Validation section |
+| Distribution strategy | D9 | Replace Desktop Distribution section with full Creator Acquisition section | Section replaced |
+| FCP XML importer | D10 | Add to Phase 2 scope | Added to Phase 2 feature list |
+| Build in public | D11 | Add to Distribution section | Added as Channel 5 |
+| Steam distribution | D12 | Add to Stage 2 distribution | Added to Technical Distribution |
+| Descript importer | D13 | Defer to TODOS.md (post-MLP validation gate) | Written to TODOS.md |
+| Multi-language Whisper | D14 | Add to MLP scope as FR-WL1 | Added to FR list + sprint 5-6 |
+| Outside voice (Codex) | D15 | Get cross-model perspective | 24 tensions surfaced, key ones decided in D16-D19 |
+| Import formats (R3D/BRAW) | D16 | Cut from MLP — MP4/MOV/MKV/AVI/WebM only | FR1 updated; R3D/BRAW deferred to Stage 2 |
+| Win+Mac simultaneous launch | D17 | Keep simultaneous | Confirmed, no change |
+| Free tier entitlements | D18 | Unlimited projects + no AI features | Confirmed, already correct in PRD |
+| Style model moat framing | D19 | Reframe as switching-cost moat + patent legal layer + Stage 2 signal depth roadmap | Strategic framing updated throughout |
