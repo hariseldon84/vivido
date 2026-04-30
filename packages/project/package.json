@@ -1,0 +1,17 @@
+{
+  "name": "@vivido/project",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo \"Project package is source-only for now\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "echo \"No project tests yet\""
+  },
+  "dependencies": {
+    "zod": "^3.24.4"
+  }
+}

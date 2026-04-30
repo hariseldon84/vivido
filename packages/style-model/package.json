@@ -1,0 +1,14 @@
+{
+  "name": "@vivido/style-model",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo \"Style model package is source-only for now\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "echo \"No style model tests yet\""
+  }
+}

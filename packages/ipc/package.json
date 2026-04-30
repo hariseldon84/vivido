@@ -1,0 +1,20 @@
+{
+  "name": "@vivido/ipc",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo \"IPC package is source-only for now\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "echo \"No IPC tests yet\""
+  },
+  "dependencies": {
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "zod-to-json-schema": "^3.24.6"
+  }
+}

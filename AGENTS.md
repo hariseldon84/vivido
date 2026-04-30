@@ -1,52 +1,16 @@
 <claude-mem-context>
 # Memory Context
 
-# [vivido] recent context, 2026-04-28 12:20pm GMT+5:30
+# [vivido] recent context, 2026-04-30 3:16pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 38 obs (18,243t read) | 700,853t work | 97% savings
+Stats: 50 obs (21,956t read) | 1,559,164t work | 99% savings
 
-### Apr 26, 2026
-1 5:06p 🔵 Claude Code Global Settings — Enabled Plugins Inventory
-2 6:18p 🔵 BMad Method Configuration in Vivido Project
-3 " 🔵 Vivido Project is Greenfield — No BMad Artifacts Produced Yet
-4 6:20p 🔵 BMad Domain Research Workflow Customization Surface
-5 7:29p 🔵 BMad Domain Research Workflow Step Architecture
-6 " 🟣 Domain Research Document Created for Vivido Competitive Landscape
-7 7:31p ✅ Domain Research Advanced to Step 2 — Industry Analysis Web Research Begins
-8 7:32p 🔵 Creator Economy and Video Tools Market Data Gathered via Web Research
-9 " 🔵 Competitive Landscape Intelligence Gathered for Vivido — Tool Positioning Map
-10 " 🔵 Creator Workflow Pain Points and Market Gaps Surfaced for Vivido Positioning
-11 7:33p 🔵 CapCut US Ban Creates Market Vacuum; Descript Pricing and Limitations Reveal Competitor Weaknesses
-12 " ✅ Industry Analysis Section Written to Vivido Domain Research Document
-13 7:35p 🔴 Truncated Section Header Fixed in Domain Research Document
-14 7:36p 🔵 Competitor Financial and User Scale Data Gathered for Vivido Research
-15 " 🔵 Extended Competitor Profiles Researched — Adobe, DaVinci, VEED, Submagic, Canva, Switching Costs
-16 7:37p ✅ Full Competitive Landscape Section Written to Vivido Domain Research Document
-17 7:38p 🔵 Regulatory Landscape Researched for Vivido — Privacy, AI Copyright, YouTube API Constraints
-18 7:40p 🟣 BMad Domain Research Step 4 (Regulatory Requirements) Completed
-21 7:52p 🟣 BMad Domain Research Step 5 (Technical Trends) Written to Research Document
-19 7:53p 🔵 AI Video Editing Commoditization — Silence Removal and Auto-Cut Are Table Stakes in 2025
-20 " 🔵 Cloud Video Encoding Infrastructure Pricing — AWS MediaConvert vs Mux vs Cloudflare Stream
-22 8:53p ✅ bmad-create-prd Step 1 Completed — Workflow Initialized for Vivido PRD
-23 " ⚖️ Vivido Architectural Decision Process Initiated — Starting with Timeline Scope
 ### Apr 27, 2026
-24 1:54p 🟣 Vivido Patent Strategy Session — 5 Defensible IP Claims Documented
-25 " ⚖️ Vivido Competitive Scope Expanded to Include Audio, Captioning, and Recording Competitors
-26 2:10p 🟣 Vivido Kill Sequence Expanded to 7 Full Tool Categories in fresh-ideas.md
-27 2:17p ⚖️ Vivido Pricing Architecture Defined — Hybrid Model with 4 Tiers
-28 2:18p 🟣 Vivido Onboarding Emotional Arc Defined — 15-Minute First Experience Design
-29 " ⚖️ Vivido Feature Build Order Locked — 3 Stages with Explicit Kill Targets Per Stage
-30 " ⚖️ Vivido 10-Year Vision Documented — 6-Stage Competitive Evolution to "Filmmaker's OS" by 2036
-31 2:19p ⚖️ Vivido PRD.md: Lock Strategic Foundation and Begin Full PRD Build
-32 2:24p 🟣 Vivido prd.md Created — BMAD PRD Workflow Step 1 Initialized
-S24 Vivido PRD BMAD Step 2 Advanced Elicitation — 5 method options presented to user for classification deep-dive before PRD vision is written (Apr 27 at 2:25 PM)
-S22 Vivido PRD BMAD Step 2 — Project Discovery classification confirmed; awaiting user to continue to Product Vision (Step 3) (Apr 27 at 2:25 PM)
 S25 Vivido PRD BMAD Step 2 Advanced Elicitation — Tree of Thoughts complete, B+C hybrid classification locked and written to fresh-ideas.md (Apr 27 at 2:31 PM)
-33 2:32p ⚖️ Vivido Classification Locked: B+C Hybrid — YouTube Stack Killer GTM + Intelligence Platform Architecture
 S26 Vivido PRD BMAD Step 2 Advanced Elicitation — Debate Club Showdown complete, "Design as a platform, ship as a desktop app" locked; 3 elicitation methods remain (Apr 27 at 2:32 PM)
 34 2:37p ⚖️ Vivido Architecture Decision: "Design as a Platform, Ship as a Desktop App"
 S27 Vivido PRD BMAD Step 2 Advanced Elicitation — Cross-Functional War Room complete, 7 non-negotiable pre-PRD architectural decisions locked and written to fresh-ideas.md (Apr 27 at 2:37 PM)
@@ -57,8 +21,58 @@ S30 Comparative Analysis Matrix (Advanced Elicitation Method 5) written to fresh
 37 3:31p ⚖️ Vivido Recording Capability Confirmed as Core Feature — Competes with Riverside and Loom
 S31 BMAD Step 2 Discovery locked — prd.md frontmatter updated with full classification, step-02b-vision.md loaded to begin Product Vision Discovery (Apr 27 at 3:32 PM)
 S29 Complete BMAD PRD Step 2 Advanced Elicitation for Vivido — ran all 5 methods, added recording scope, wrote Comparative Analysis Matrix (method 5) (Apr 27 at 3:32 PM)
-S32 BMAD Step 2b Product Vision Discovery — vision statement drafted and presented for user confirmation before Executive Summary generation (Apr 27 at 3:39 PM)
+S32 BMAD Step 2b Product Vision Discovery — vision statement drafted and presented for user confirmation before Executive Summary generation (Apr 27 at 3:38 PM)
+S33 Simple greeting - user asked Claude to respond with "hello" (Apr 27 at 3:39 PM)
 38 9:15p ⚖️ Vivido — AI-Native Video Editor Startup: Core Architecture Decisions
+### Apr 28, 2026
+40 12:20p ⚖️ Vivido PRD v2.0 — Brutally Honest Technical Review Request
+70 10:56p 🔵 Vivido Project Repository Structure Mapped
+71 " 🔵 Vivido Tech Stack and Architecture Locked (ADR-001-C)
+72 " 🔵 Vivido MLP Definition: 4 Non-Negotiable Features
+73 " 🔵 Vivido Design System Locked — Indigo Dark NLE Aesthetic
+74 " 🔵 Vivido PRD Sharded Into 18 Epic Files — All Status: NOT STARTED
+75 " 🔵 Vivido Pricing, GTM, and Competitive Position Defined
+76 " 🔵 Framework Decision Pending: GSD vs Gstack vs BMAD for Development
+77 10:59p 🔵 Three Architectural Blockers Must Be Resolved Before Sprint 1
+78 " 🔵 Vivido Build Plan: Pre-Sprint 0 Legal Gate Before Any Code
+79 " ⚖️ CEO + Engineering Review Decisions Logged — 19 CEO Decisions, 12 Engineering Findings
+80 " 🟣 WORKING_CONTEXT.md Created as Fast Re-Entry Document with Framework Recommendation
+### Apr 29, 2026
+83 9:20a 🟣 Development Guidelines Document Created (prd/18)
+84 " ✅ Design Adherence Sections Added to All MLP Epic Files (E2–E8)
+85 2:12p 🔵 BMAD Agent Workflow System Discovered in Vivido Project
+86 2:13p 🟣 Four Milestone Definition Documents Created (prd/19–22)
+87 " 🟣 Story Maps Created for All Four Milestone Stages
+88 2:16p ⚖️ Vivido PRD Repository Complete — Next Step is BMAD Story Generation
+89 2:26p ⚖️ usePlatform() Hook Selected as Next Implementation Target
+90 2:32p ⚖️ usePlatform() Contract to be Documented in PRD or Architecture File
+91 " 🔵 usePlatform() Contract Spec Found in prd/02-architecture.md and prd/16-open-questions.md
+92 2:33p 🟣 usePlatform() Contract Formally Specified and Captured in Three PRD Files
+93 " 🟣 Vivido PRD Now Has 23 Documents — usePlatform() Contract Resolves Open Question #8
+94 3:07p 🟣 IPC Schema Toolchain Specified — Open Question #9 Resolved
+95 3:09p 🟣 All Three Sprint-1 Architecture Blockers Resolved — Open Questions #4, #8, #9 Closed
+96 3:10p 🟣 Vivido PRD Grows to 26 Documents — All Sprint-1 Architecture Blockers Formally Closed
+97 3:16p ⚖️ Vivido PRD Phase Complete — Developer Agent Handoff Considered
+98 3:17p 🔵 Vivido BMAD Developer Agent "Amelia" Skill Discovered and Read
+99 3:18p 🔵 BMAD Config Confirmed — Amelia Handoff Ready, Implementation Artifacts Empty
+100 " 🟣 Developer Agent Handoff Documents Created in implementation-artifacts/
+101 3:21p 🔵 Vivido Repository File Inventory — Complete Planning Structure Confirmed
+102 3:22p 🔵 Vivido Has Empty apps/ and packages/ Scaffold Directories — E1 Implementation Starting
+103 3:25p ⚖️ Vivido Development Mode Activated — E1 Foundation Shell Implementation Begins
+104 5:21p 🔵 Vivido E1 Foundation Shell — Current Implementation Status
+S34 User asked for next steps assessment — agent reviewed repo structure, implementation status, handoff docs, progress logs, and actual source code to give an accurate picture of where E1 stands (Apr 29 at 5:22 PM)
+### Apr 30, 2026
+105 9:35a ⚖️ Excel Website Tracker Improvement Plan Initiated
+106 " 🔵 Codex Spreadsheets Skill Selected for Excel Enhancement Task
+107 " 🔵 Codex Runtime Environment Confirmed and Workspace Symlink Established
+108 9:37a 🔵 @oai/artifact-tool WASM Runtime Crash on First Execution Attempt
+109 " 🔵 @oai/artifact-tool WASM Crash Persists; Codex Pivots to Python openpyxl Fallback
+111 " 🔵 Website Tracker Workbook Structure Fully Inspected via openpyxl
+112 " 🟣 Full Website Tracker Workbook Builder Script Written (build_tracker.py)
+110 9:38a ⚖️ Codex Switched to openpyxl-Based Python Inspection as Fallback
+113 " ✅ Website Tracker Excel Enhancement Task Initiated
+114 9:48a 🟣 Website Tracker Excel Rebuilt with 3 Linked Sheets and Gantt View
+115 " 🔴 Excel Hyperlink Fix: Sheet Names with Spaces Need Single-Quote Wrapping
 
-Access 701k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 1559k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

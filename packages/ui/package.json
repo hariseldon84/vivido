@@ -1,0 +1,18 @@
+{
+  "name": "@vivido/ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "build": "echo \"UI package is source-only for now\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "echo \"No UI tests yet\""
+  },
+  "peerDependencies": {
+    "react": "^19.1.0"
+  }
+}

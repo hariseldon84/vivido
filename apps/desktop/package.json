@@ -1,0 +1,27 @@
+{
+  "name": "apps-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"tsc -w -p tsconfig.electron.json\" \"vite --config vite.config.ts\" \"wait-on file:dist-electron/main.js tcp:5173 && electron .\"",
+    "build": "tsc -p tsconfig.electron.json && vite build --config vite.config.ts",
+    "preview": "npm run build && VIVIDO_USE_STATIC_RENDERER=1 electron dist-electron/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.electron.json",
+    "test": "echo \"No desktop tests yet\""
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.5.0",
+    "concurrently": "^9.1.2",
+    "electron": "^36.3.2",
+    "vite": "^6.3.5",
+    "wait-on": "^8.0.3"
+  }
+}
