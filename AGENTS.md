@@ -1,38 +1,25 @@
 <claude-mem-context>
 # Memory Context
 
-# [vivido] recent context, 2026-05-01 9:10pm GMT+5:30
+# [vivido] recent context, 2026-05-01 11:32pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (21,956t read) | 1,559,164t work | 99% savings
+Stats: 50 obs (21,166t read) | 1,306,912t work | 98% savings
 
 ### Apr 27, 2026
-S25 Vivido PRD BMAD Step 2 Advanced Elicitation — Tree of Thoughts complete, B+C hybrid classification locked and written to fresh-ideas.md (Apr 27 at 2:31 PM)
-S26 Vivido PRD BMAD Step 2 Advanced Elicitation — Debate Club Showdown complete, "Design as a platform, ship as a desktop app" locked; 3 elicitation methods remain (Apr 27 at 2:32 PM)
-34 2:37p ⚖️ Vivido Architecture Decision: "Design as a Platform, Ship as a Desktop App"
-S27 Vivido PRD BMAD Step 2 Advanced Elicitation — Cross-Functional War Room complete, 7 non-negotiable pre-PRD architectural decisions locked and written to fresh-ideas.md (Apr 27 at 2:37 PM)
-35 3:13p ⚖️ Vivido Cross-Functional War Room: 7 Non-Negotiable Pre-PRD Architectural Decisions
-S28 Vivido PRD BMAD Step 2 Advanced Elicitation — ADR-001-C (Dual-Runtime Architecture) locked; 4 of 5 elicitation methods complete (Apr 27 at 3:13 PM)
-36 3:27p ⚖️ Vivido ADR-001-C: Dual-Runtime Architecture with Explicit Compute Boundary (ACCEPTED)
-S30 Comparative Analysis Matrix (Advanced Elicitation Method 5) written to fresh-ideas.md — BMAD Step 2 Advanced Elicitation complete for Vivido PRD (Apr 27 at 3:27 PM)
-37 3:31p ⚖️ Vivido Recording Capability Confirmed as Core Feature — Competes with Riverside and Loom
 S31 BMAD Step 2 Discovery locked — prd.md frontmatter updated with full classification, step-02b-vision.md loaded to begin Product Vision Discovery (Apr 27 at 3:32 PM)
 S29 Complete BMAD PRD Step 2 Advanced Elicitation for Vivido — ran all 5 methods, added recording scope, wrote Comparative Analysis Matrix (method 5) (Apr 27 at 3:32 PM)
 S32 BMAD Step 2b Product Vision Discovery — vision statement drafted and presented for user confirmation before Executive Summary generation (Apr 27 at 3:38 PM)
 S33 Simple greeting - user asked Claude to respond with "hello" (Apr 27 at 3:39 PM)
-38 9:15p ⚖️ Vivido — AI-Native Video Editor Startup: Core Architecture Decisions
 ### Apr 28, 2026
-40 12:20p ⚖️ Vivido PRD v2.0 — Brutally Honest Technical Review Request
-70 10:56p 🔵 Vivido Project Repository Structure Mapped
-71 " 🔵 Vivido Tech Stack and Architecture Locked (ADR-001-C)
+S34 User asked for next steps assessment — agent reviewed repo structure, implementation status, handoff docs, progress logs, and actual source code to give an accurate picture of where E1 stands (Apr 28 at 9:08 PM)
+71 10:56p 🔵 Vivido Tech Stack and Architecture Locked (ADR-001-C)
 72 " 🔵 Vivido MLP Definition: 4 Non-Negotiable Features
 73 " 🔵 Vivido Design System Locked — Indigo Dark NLE Aesthetic
 74 " 🔵 Vivido PRD Sharded Into 18 Epic Files — All Status: NOT STARTED
-75 " 🔵 Vivido Pricing, GTM, and Competitive Position Defined
-76 " 🔵 Framework Decision Pending: GSD vs Gstack vs BMAD for Development
 77 10:59p 🔵 Three Architectural Blockers Must Be Resolved Before Sprint 1
 78 " 🔵 Vivido Build Plan: Pre-Sprint 0 Legal Gate Before Any Code
 79 " ⚖️ CEO + Engineering Review Decisions Logged — 19 CEO Decisions, 12 Engineering Findings
@@ -60,7 +47,7 @@ S33 Simple greeting - user asked Claude to respond with "hello" (Apr 27 at 3:39 
 102 3:22p 🔵 Vivido Has Empty apps/ and packages/ Scaffold Directories — E1 Implementation Starting
 103 3:25p ⚖️ Vivido Development Mode Activated — E1 Foundation Shell Implementation Begins
 104 5:21p 🔵 Vivido E1 Foundation Shell — Current Implementation Status
-S34 User asked for next steps assessment — agent reviewed repo structure, implementation status, handoff docs, progress logs, and actual source code to give an accurate picture of where E1 stands (Apr 29 at 5:22 PM)
+S35 Fix critical runtime regression: all videos broken in Vivido preview mode (black screen, 0:00, playback never starts) — implemented React ref callback stability fix in App.tsx (Apr 29 at 5:22 PM)
 ### Apr 30, 2026
 105 9:35a ⚖️ Excel Website Tracker Improvement Plan Initiated
 106 " 🔵 Codex Spreadsheets Skill Selected for Excel Enhancement Task
@@ -73,6 +60,20 @@ S34 User asked for next steps assessment — agent reviewed repo structure, impl
 113 " ✅ Website Tracker Excel Enhancement Task Initiated
 114 9:48a 🟣 Website Tracker Excel Rebuilt with 3 Linked Sheets and Gantt View
 115 " 🔴 Excel Hyperlink Fix: Sheet Names with Spaces Need Single-Quote Wrapping
+### May 1, 2026
+116 9:30p 🔵 Vivido Project State: Preview Video Playback Fully Broken
+117 9:31p 🔵 Root Cause Identified: Blob URL Revocation in useEffect Cleanup Destroys Active Preview Sources
+118 9:33p 🔴 App.tsx: Added useCallback Import as First Step of Playback Fix
+119 " 🔴 teardownMediaElement Extracted to Module Scope in App.tsx
+S37 Fix video playback regression in Vivido — videos not playing in preview monitor, investigation into resolution-dependent failures (May 1 at 9:33 PM)
+120 9:34p 🔵 Video Playback Fails for High-Resolution and Non-Standard Aspect Ratio Media
+121 " 🔵 Resolution-Dependent Media Playback Failure
+S36 User reported partial video playback fix — high-resolution videos (3840×2160) still broken, image preview not working, while standard-resolution videos (1280×720, 1920×1080) and audio now play correctly (May 1 at 9:35 PM)
+S38 Fix video playback regression — deeper pass on blob URL lifecycle and image error state in Vivido monitor (May 1 at 10:58 PM)
+122 11:04p 🔴 Image Monitor Now Falls Back to Thumbnail on Load Error
+123 " ⚖️ E2 Preview Playback Regression Fix Verified — Milestone Checkpoint Requested
+S39 Fix media playback issues in Vivido desktop editor — specifically 3840×2160 YouTube Shorts video and 941×1672 PNG thumbnail not rendering/playing (May 1 at 11:04 PM)
+124 11:30p 🔴 Blob URL Revocation on Multi-Batch Import Fixed (Pass 2 of Playback Regression)
 
-Access 1559k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 1307k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
