@@ -11,8 +11,10 @@ export const mediaAssetMetadataSchema = z.object({
   height: z.number().nullable().default(null),
   frameRate: z.number().nullable().default(null),
   colorSpace: z.string().nullable().default(null),
+  codecName: z.string().nullable().default(null),
   sampleRate: z.number().nullable().default(null),
   channels: z.number().nullable().default(null),
+  thumbnailDataUrl: z.string().nullable().default(null),
   probeSource: mediaProbeSourceSchema.default("fallback")
 });
 
@@ -32,8 +34,10 @@ export const mediaAssetSchema = z.object({
     height: null,
     frameRate: null,
     colorSpace: null,
+    codecName: null,
     sampleRate: null,
     channels: null,
+    thumbnailDataUrl: null,
     probeSource: "fallback"
   })
 });
@@ -117,9 +121,10 @@ function buildTechnicalSummary(kind: MediaAssetKind, metadata: MediaAssetMetadat
     case "video":
       return [
         extension || "Unknown",
+        metadata.codecName ? metadata.codecName.toUpperCase() : null,
         metadata.width && metadata.height ? `${metadata.width}×${metadata.height}` : null,
         metadata.frameRate ? `${metadata.frameRate.toFixed(2)} fps` : null,
-        metadata.colorSpace
+        metadata.colorSpace ?? null
       ]
         .filter(Boolean)
         .join(" · ");
@@ -164,8 +169,10 @@ export function createImportedAsset(filePath: string): MediaAsset {
     height: null,
     frameRate: null,
     colorSpace: null,
+    codecName: null,
     sampleRate: null,
     channels: null,
+    thumbnailDataUrl: null,
     probeSource: "fallback"
   };
 

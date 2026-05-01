@@ -15,8 +15,10 @@ declare global {
           height: number | null;
           frameRate: number | null;
           colorSpace: string | null;
+          codecName: string | null;
           sampleRate: number | null;
           channels: number | null;
+          thumbnailDataUrl: string | null;
           probeSource: "ffprobe" | "browser" | "fallback";
         }>;
       };

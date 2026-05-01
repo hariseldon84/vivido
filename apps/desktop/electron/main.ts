@@ -30,6 +30,8 @@ const isDev = !app.isPackaged;
 const useStaticRenderer = process.env.VIVIDO_USE_STATIC_RENDERER === "1";
 const recoveryStatePath = join(app.getPath("userData"), "recovery-state.json");
 const execFileAsync = promisify(execFile);
+const ffprobeCandidates = ["ffprobe", "/opt/homebrew/bin/ffprobe", "/usr/local/bin/ffprobe", "/usr/bin/ffprobe"];
+const ffmpegCandidates = ["ffmpeg", "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg"];
 
 type RecoveryState = {
   cleanExit: boolean;
@@ -96,37 +98,182 @@ function parseFrameRate(value: string | undefined) {
     return null;
   }
 
-  return top / bottom;
+  const frameRate = top / bottom;
+  const commonRates = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
+  const nearest = commonRates.find((candidate) => Math.abs(candidate - frameRate) < 0.08);
+
+  if (nearest != null) {
+    return nearest;
+  }
+
+  return Math.round(frameRate * 100) / 100;
+}
+
+function normalizeColorToken(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.toLowerCase();
+
+  switch (normalized) {
+    case "bt709":
+      return "Rec. 709";
+    case "bt2020nc":
+    case "bt2020":
+      return "Rec. 2020";
+    case "smpte170m":
+      return "Rec. 601";
+    case "smpte240m":
+      return "SMPTE 240M";
+    case "iec61966-2-1":
+      return "sRGB";
+    case "arib-std-b67":
+      return "HLG";
+    case "smpte2084":
+      return "PQ";
+    case "tv":
+      return "Video range";
+    case "pc":
+      return "Full range";
+    default:
+      return value.replace(/_/g, " ");
+  }
+}
+
+function normalizeColorProfile(videoStream: Record<string, unknown> | undefined) {
+  if (!videoStream) {
+    return null;
+  }
+
+  const colorSpace = normalizeColorToken(
+    typeof videoStream.color_space === "string" ? videoStream.color_space : null
+  );
+  const colorPrimaries = normalizeColorToken(
+    typeof videoStream.color_primaries === "string" ? videoStream.color_primaries : null
+  );
+  const colorTransfer = normalizeColorToken(
+    typeof videoStream.color_transfer === "string" ? videoStream.color_transfer : null
+  );
+  const colorRange = normalizeColorToken(
+    typeof videoStream.color_range === "string" ? videoStream.color_range : null
+  );
+  const parts = [colorSpace, colorPrimaries, colorTransfer, colorRange].filter(
+    (part, index, array) => Boolean(part) && array.indexOf(part) === index
+  );
+
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+async function tryFfprobeExecutable(executable: string, filePath: string) {
+  const { stdout } = await execFileAsync(executable, [
+    "-v",
+    "quiet",
+    "-print_format",
+    "json",
+    "-show_format",
+    "-show_streams",
+    filePath
+  ]);
+
+  return JSON.parse(stdout) as {
+    streams?: Array<Record<string, unknown>>;
+    format?: Record<string, unknown>;
+  };
+}
+
+async function tryFfmpegThumbnail(executable: string, filePath: string) {
+  return new Promise<Buffer>((resolve, reject) => {
+    execFile(
+      executable,
+      [
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-ss",
+        "00:00:00.500",
+        "-i",
+        filePath,
+        "-frames:v",
+        "1",
+        "-vf",
+        "scale=320:180:force_original_aspect_ratio=increase,crop=320:180",
+        "-f",
+        "image2pipe",
+        "-vcodec",
+        "mjpeg",
+        "pipe:1"
+      ],
+      { encoding: "buffer", maxBuffer: 8 * 1024 * 1024 },
+      (error, stdout) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        if (!stdout || stdout.length === 0) {
+          reject(new Error("No thumbnail bytes returned."));
+          return;
+        }
+
+        resolve(stdout);
+      }
+    );
+  });
+}
+
+async function generateDesktopThumbnail(filePath: string) {
+  for (const executable of ffmpegCandidates) {
+    try {
+      const bytes = await tryFfmpegThumbnail(executable, filePath);
+      return `data:image/jpeg;base64,${bytes.toString("base64")}`;
+    } catch {
+      // try next candidate
+    }
+  }
+
+  return null;
 }
 
 async function scanMediaMetadataFromFfprobe(filePath: string) {
   try {
-    const { stdout } = await execFileAsync("ffprobe", [
-      "-v",
-      "quiet",
-      "-print_format",
-      "json",
-      "-show_format",
-      "-show_streams",
-      filePath
-    ]);
-    const parsed = JSON.parse(stdout) as {
+    let parsed: {
       streams?: Array<Record<string, unknown>>;
       format?: Record<string, unknown>;
-    };
+    } | null = null;
+
+    for (const executable of ffprobeCandidates) {
+      try {
+        parsed = await tryFfprobeExecutable(executable, filePath);
+        break;
+      } catch {
+        parsed = null;
+      }
+    }
+
+    if (!parsed) {
+      return null;
+    }
+
     const streams = parsed.streams ?? [];
     const videoStream = streams.find((stream) => stream.codec_type === "video");
     const audioStream = streams.find((stream) => stream.codec_type === "audio");
+    const thumbnailDataUrl = videoStream ? await generateDesktopThumbnail(filePath) : null;
 
     return scanMediaMetadataResponseSchema.parse({
       extension: getExtension(filePath),
       durationSeconds: safeNumber(parsed.format?.duration ?? videoStream?.duration ?? audioStream?.duration),
       width: safeNumber(videoStream?.width),
       height: safeNumber(videoStream?.height),
-      frameRate: parseFrameRate(typeof videoStream?.avg_frame_rate === "string" ? videoStream.avg_frame_rate : undefined),
-      colorSpace: typeof videoStream?.color_space === "string" ? videoStream.color_space : null,
+      frameRate:
+        parseFrameRate(typeof videoStream?.avg_frame_rate === "string" ? videoStream.avg_frame_rate : undefined) ??
+        parseFrameRate(typeof videoStream?.r_frame_rate === "string" ? videoStream.r_frame_rate : undefined),
+      colorSpace: normalizeColorProfile(videoStream),
+      codecName: typeof videoStream?.codec_name === "string" ? videoStream.codec_name : null,
       sampleRate: safeNumber(audioStream?.sample_rate),
       channels: safeNumber(audioStream?.channels),
+      thumbnailDataUrl,
       probeSource: "ffprobe"
     });
   } catch {
@@ -240,8 +387,10 @@ app.whenReady().then(() => {
       height: null,
       frameRate: null,
       colorSpace: null,
+      codecName: null,
       sampleRate: null,
       channels: null,
+      thumbnailDataUrl: null,
       probeSource: "fallback"
     });
   });

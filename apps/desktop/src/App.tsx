@@ -1,6 +1,6 @@
 import { createBlankProject, type MediaAsset, type VividoProject } from "@vivido/project";
 import { AIBadge, AITrustSettings, PanelHeader, Tabs } from "@vivido/ui";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePlatform } from "./platform/usePlatform";
 
 const appTabs = [
@@ -39,6 +39,127 @@ function renderTabBlurb(tab: AppTabId) {
   }
 }
 
+function formatFrameRate(frameRate: number | null) {
+  if (frameRate == null || Number.isNaN(frameRate)) {
+    return null;
+  }
+
+  return `${frameRate.toFixed(frameRate % 1 === 0 ? 0 : 2)} fps`;
+}
+
+function getAssetMetaChips(asset: MediaAsset) {
+  const chips: string[] = [];
+  const extension = asset.metadata.extension ? asset.metadata.extension.toUpperCase() : null;
+
+  if (extension) {
+    chips.push(extension);
+  }
+
+  if (asset.kind === "video") {
+    if (asset.metadata.codecName) {
+      chips.push(asset.metadata.codecName.toUpperCase());
+    }
+
+    if (asset.metadata.width && asset.metadata.height) {
+      chips.push(`${asset.metadata.width}×${asset.metadata.height}`);
+    }
+
+    const frameRate = formatFrameRate(asset.metadata.frameRate);
+    if (frameRate) {
+      chips.push(frameRate);
+    }
+
+    if (asset.metadata.colorSpace) {
+      chips.push(asset.metadata.colorSpace);
+    }
+  }
+
+  if (asset.kind === "audio") {
+    if (asset.metadata.sampleRate) {
+      chips.push(`${Math.round(asset.metadata.sampleRate / 1000)} kHz`);
+    }
+
+    if (asset.metadata.channels) {
+      chips.push(`${asset.metadata.channels} ch`);
+    }
+  }
+
+  if (asset.kind === "image") {
+    if (asset.metadata.width && asset.metadata.height) {
+      chips.push(`${asset.metadata.width}×${asset.metadata.height}`);
+    }
+
+    chips.push("Still asset");
+  }
+
+  return chips;
+}
+
+function getPrimaryAssetStatus(asset: MediaAsset) {
+  if (asset.kind === "audio") {
+    return asset.usageStatus.toUpperCase();
+  }
+
+  return asset.durationLabel;
+}
+
+function getMonitorViewportMode(asset: MediaAsset) {
+  const width = asset.metadata.width;
+  const height = asset.metadata.height;
+
+  if (!width || !height || width === height) {
+    return "landscape";
+  }
+
+  return height > width ? "portrait" : "landscape";
+}
+
+function getMonitorViewportStyle(
+  asset: MediaAsset,
+  zoomMode: "fit" | "native",
+  canvasSize: { width: number; height: number }
+): CSSProperties | undefined {
+  const width = asset.metadata.width;
+  const height = asset.metadata.height;
+
+  if (!width || !height || !canvasSize.width || !canvasSize.height) {
+    return undefined;
+  }
+
+  const fitScale = Math.min(canvasSize.width / width, canvasSize.height / height);
+  const nativeScale = Math.min(1, fitScale);
+  const scale = zoomMode === "native" ? nativeScale : fitScale;
+
+  return {
+    width: `${Math.max(1, Math.floor(width * scale))}px`,
+    height: `${Math.max(1, Math.floor(height * scale))}px`
+  };
+}
+
+function teardownMediaElement(element: HTMLVideoElement | HTMLAudioElement) {
+  try {
+    element.pause();
+  } catch {
+    // ignore pause failures during element teardown
+  }
+
+  element.removeAttribute("src");
+  element.load();
+}
+
+function filePathToRuntimeUrl(filePath: string) {
+  if (filePath.startsWith("file://")) {
+    return filePath;
+  }
+
+  const normalized = filePath.replace(/\\/g, "/");
+  if (normalized.startsWith("/")) {
+    return `file://${encodeURI(normalized)}`;
+  }
+
+  return "";
+}
+
 export function App() {
   const defaultRecoveryMessage =
     "No recovery draft detected yet. Recovery appears only after autosave runs and the app closes unexpectedly.";
@@ -53,7 +174,21 @@ export function App() {
   const [pendingProjectAction, setPendingProjectAction] = useState<PendingProjectAction>(null);
   const [mediaSearch, setMediaSearch] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [assetPreviewSources, setAssetPreviewSources] = useState<Record<string, string>>({});
+  const [previewDuration, setPreviewDuration] = useState(0);
+  const [previewCurrentTime, setPreviewCurrentTime] = useState(0);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+  const [previewZoomMode, setPreviewZoomMode] = useState<"fit" | "native">("fit");
+  const [imageMonitorError, setImageMonitorError] = useState(false);
   const platform = usePlatform();
+  const navigatorPlatform =
+    typeof navigator !== "undefined"
+      ? navigator.platform || navigator.userAgent || ""
+      : "";
+  const isApplePlatform =
+    /Mac|iPhone|iPad/.test(navigatorPlatform);
+  const showCustomTrafficLights = !isApplePlatform;
   const projectSummary = `${currentProject.mediaAssets.length} assets · ${currentProject.timeline.tracks.length} tracks`;
   const activeTabLabel = appTabs.find((tab) => tab.id === activeTab)?.label ?? "Editor";
   const visibleMediaAssets = currentProject.mediaAssets.filter((asset) => {
@@ -70,8 +205,19 @@ export function App() {
   });
   const visibleVideoAssets = visibleMediaAssets.filter((asset) => asset.kind !== "audio");
   const visibleAudioAssets = visibleMediaAssets.filter((asset) => asset.kind === "audio");
+  const selectedAsset =
+    visibleMediaAssets.find((asset) => asset.id === selectedAssetId) ??
+    visibleMediaAssets[0] ??
+    null;
   const currentProjectRef = useRef(currentProject);
   const projectPathRef = useRef(projectPath);
+  const previewMediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
+  const monitorCanvasRef = useRef<HTMLDivElement | null>(null);
+  const [monitorCanvasSize, setMonitorCanvasSize] = useState({ width: 0, height: 0 });
+  // Ref so the unmount-only cleanup always sees the latest blob URLs without
+  // needing [assetPreviewSources] as an effect dep (which would revoke blobs on every import batch).
+  const assetPreviewSourcesRef = useRef(assetPreviewSources);
+  assetPreviewSourcesRef.current = assetPreviewSources;
 
   useEffect(() => {
     currentProjectRef.current = currentProject;
@@ -80,6 +226,64 @@ export function App() {
   useEffect(() => {
     projectPathRef.current = projectPath;
   }, [projectPath]);
+
+  useEffect(() => {
+    setPreviewDuration(0);
+    setPreviewCurrentTime(0);
+    setIsPreviewPlaying(false);
+    setPreviewZoomMode("fit");
+    setImageMonitorError(false);
+  }, [selectedAssetId]);
+
+  useEffect(() => {
+    const canvas = monitorCanvasRef.current;
+    if (!canvas || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const updateSize = () => {
+      setMonitorCanvasSize({
+        width: canvas.clientWidth,
+        height: canvas.clientHeight
+      });
+    };
+
+    updateSize();
+
+    const observer = new ResizeObserver(() => {
+      updateSize();
+    });
+
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, [selectedAssetId, activeTab]);
+
+  // Revoke blob URLs on component unmount only, NOT on every import batch.
+  // Using assetPreviewSourcesRef (updated synchronously above) means the cleanup
+  // always sees the latest blob map without triggering on every setAssetPreviewSources call.
+  useEffect(() => {
+    return () => {
+      Object.values(assetPreviewSourcesRef.current).forEach((sourceUrl) => {
+        if (sourceUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(sourceUrl);
+        }
+      });
+    };
+  }, []); // empty deps = unmount only
+
+  useEffect(() => {
+    if (visibleMediaAssets.length === 0) {
+      if (selectedAssetId !== null) {
+        setSelectedAssetId(null);
+      }
+      return;
+    }
+
+    const selectionStillVisible = visibleMediaAssets.some((asset) => asset.id === selectedAssetId);
+    if (!selectionStillVisible) {
+      setSelectedAssetId(visibleMediaAssets[0]?.id ?? null);
+    }
+  }, [selectedAssetId, visibleMediaAssets]);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,8 +390,14 @@ export function App() {
     };
   }
 
-  function applyImportedAssets(importedAssets: MediaAsset[], duplicateCount: number, sourceLabel: string) {
+  function applyImportedAssets(
+    importedAssets: MediaAsset[],
+    duplicateCount: number,
+    sourceLabel: string,
+    previewSources: Record<string, string>
+  ) {
     let importedCount = 0;
+    let firstImportedAssetId: string | null = importedAssets[0]?.id ?? null;
 
     setCurrentProject((previous) => {
       const merged = mergeImportedAssets(previous.mediaAssets, importedAssets);
@@ -203,6 +413,13 @@ export function App() {
     });
 
     setIsDirty(true);
+    setAssetPreviewSources((previous) => ({
+      ...previous,
+      ...previewSources
+    }));
+    if (firstImportedAssetId) {
+      setSelectedAssetId(firstImportedAssetId);
+    }
     setProjectMessage(
       duplicateCount > 0
         ? `${sourceLabel}: imported ${importedCount} media file${importedCount === 1 ? "" : "s"} and skipped ${duplicateCount} duplicate${duplicateCount === 1 ? "" : "s"}.`
@@ -332,7 +549,7 @@ export function App() {
       return;
     }
 
-    applyImportedAssets(result.data.assets, result.data.duplicateCount, "File picker");
+    applyImportedAssets(result.data.assets, result.data.duplicateCount, "File picker", result.data.previewSources);
   }
 
   async function handleMediaDrop(files: File[]) {
@@ -344,7 +561,7 @@ export function App() {
       return;
     }
 
-    applyImportedAssets(result.data.assets, result.data.duplicateCount, "Drag and drop");
+    applyImportedAssets(result.data.assets, result.data.duplicateCount, "Drag and drop", result.data.previewSources);
   }
 
   function handleRemoveMedia(assetId: string) {
@@ -364,6 +581,19 @@ export function App() {
     });
 
     setIsDirty(true);
+    if (selectedAssetId === assetId) {
+      setSelectedAssetId(null);
+    }
+    setAssetPreviewSources((previous) => {
+      const sourceUrl = previous[assetId];
+      if (sourceUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(sourceUrl);
+      }
+
+      const next = { ...previous };
+      delete next[assetId];
+      return next;
+    });
     setProjectMessage(`Removed ${removedAssetName} from the asset library.`);
   }
 
@@ -389,6 +619,81 @@ export function App() {
     }
   }
 
+  function getAssetThumbnailStyle(asset: MediaAsset) {
+    if (!asset.metadata.thumbnailDataUrl) {
+      return undefined;
+    }
+
+    return {
+      backgroundImage: `linear-gradient(rgba(10, 10, 14, 0.08), rgba(10, 10, 14, 0.38)), url("${asset.metadata.thumbnailDataUrl}")`,
+      backgroundSize: "cover",
+      backgroundPosition: "center"
+    };
+  }
+
+  function handleSelectAsset(assetId: string) {
+    setSelectedAssetId(assetId);
+  }
+
+  function handleSelectableKeyDown(event: React.KeyboardEvent<HTMLElement>, assetId: string) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSelectAsset(assetId);
+    }
+  }
+
+  function getProbeSourceLabel(asset: MediaAsset) {
+    switch (asset.metadata.probeSource) {
+      case "ffprobe":
+        return "Deep scan";
+      case "browser":
+        return "Preview scan";
+      case "fallback":
+        return "Basic scan";
+    }
+  }
+
+  function getScanStatusCopy(asset: MediaAsset) {
+    const probeLabel = getProbeSourceLabel(asset);
+
+    if (asset.kind === "video") {
+      const missingFrameRate = asset.metadata.frameRate == null;
+      const missingColor = !asset.metadata.colorSpace;
+
+      if (!missingFrameRate && !missingColor) {
+        return `${probeLabel} complete`;
+      }
+
+      if (asset.metadata.probeSource === "browser") {
+        return `${probeLabel} · deeper video details still pending`;
+      }
+
+      if (asset.metadata.probeSource === "fallback") {
+        return `${probeLabel} · limited video metadata available`;
+      }
+
+      return `${probeLabel} · some technical metadata still pending`;
+    }
+
+    if (asset.kind === "audio") {
+      if (asset.metadata.sampleRate && asset.metadata.channels) {
+        return `${probeLabel} complete`;
+      }
+
+      return `${probeLabel} · some audio metadata still pending`;
+    }
+
+    if (asset.kind === "image") {
+      if (asset.metadata.width && asset.metadata.height) {
+        return `${probeLabel} complete`;
+      }
+
+      return `${probeLabel} · image dimensions still pending`;
+    }
+
+    return probeLabel;
+  }
+
   async function handleRestoreVersion(filePath: string) {
     const result = await platform.project.readVersionSnapshot(filePath);
 
@@ -403,6 +708,117 @@ export function App() {
     setProjectMessage(`Restored version from ${result.data.filePath}.`);
     setIsDirty(true);
   }
+
+  const selectedAssetPreviewSource = selectedAsset ? assetPreviewSources[selectedAsset.id] : undefined;
+  const selectedAssetRuntimeSource =
+    selectedAssetPreviewSource ||
+    (selectedAsset && platform.isDesktopRuntime ? filePathToRuntimeUrl(selectedAsset.path) : "");
+  const selectedAssetHasSessionPlaybackSource = Boolean(selectedAssetRuntimeSource);
+  const canPreviewPlayback =
+    Boolean(selectedAssetRuntimeSource) &&
+    (selectedAsset?.kind === "video" || selectedAsset?.kind === "audio");
+
+  function formatPreviewTime(seconds: number) {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return "0:00";
+    }
+
+    const totalSeconds = Math.floor(seconds);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const remainingSeconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+    }
+
+    return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+  }
+
+  function syncPreviewState() {
+    const media = previewMediaRef.current;
+    if (!media) {
+      return;
+    }
+
+    setPreviewDuration(Number.isFinite(media.duration) ? media.duration : 0);
+    setPreviewCurrentTime(Number.isFinite(media.currentTime) ? media.currentTime : 0);
+    setIsPreviewPlaying(!media.paused);
+  }
+
+  async function handleTogglePreviewPlayback() {
+    const media = previewMediaRef.current;
+    if (!media) {
+      return;
+    }
+
+    if (media.paused) {
+      try {
+        await media.play();
+      } catch {
+        return;
+      }
+    } else {
+      media.pause();
+    }
+
+    syncPreviewState();
+  }
+
+  function handleResetPreviewPlayback() {
+    const media = previewMediaRef.current;
+    if (!media) {
+      return;
+    }
+
+    media.pause();
+    media.currentTime = 0;
+    syncPreviewState();
+  }
+
+  function handlePreviewScrub(event: React.ChangeEvent<HTMLInputElement>) {
+    const media = previewMediaRef.current;
+    if (!media) {
+      return;
+    }
+
+    const nextTime = Number(event.target.value);
+    media.currentTime = nextTime;
+    setPreviewCurrentTime(nextTime);
+  }
+
+  function getPreviewAvailabilityMessage() {
+    if (!selectedAsset || selectedAsset.kind === "image") {
+      return getScanStatusCopy(selectedAsset as MediaAsset);
+    }
+
+    if (selectedAssetHasSessionPlaybackSource) {
+      return getScanStatusCopy(selectedAsset);
+    }
+
+    if (!platform.isDesktopRuntime) {
+      return "Preview session source is unavailable after reload. Re-import this file in preview mode to restore playback.";
+    }
+
+    return "Playback source is unavailable for this file right now.";
+  }
+
+  // useCallback with [] deps so React sees the same function reference on every render.
+  // Without this, React calls cleanup(null) → teardown → then remount on EVERY state update
+  // (e.g. timeupdate, loadedmetadata) because inline functions are new references each render.
+  const assignPreviewMediaRef = useCallback((element: HTMLVideoElement | HTMLAudioElement | null) => {
+    const prev = previewMediaRef.current;
+
+    if (prev && prev !== element) {
+      teardownMediaElement(prev);
+    }
+
+    previewMediaRef.current = element;
+
+    if (element) {
+      element.load();
+    }
+  }, []); // safe: only closes over previewMediaRef (a stable ref object)
 
   return (
     <div className="app-shell">
@@ -429,13 +845,15 @@ export function App() {
         </div>
       ) : null}
 
-      <header className="titlebar">
+      <header className={`titlebar${showCustomTrafficLights ? "" : " native-traffic-lights"}`}>
         <div className="titlebar-left">
-          <div className="traffic-lights" aria-hidden="true">
-            <span className="traffic-light tl-red" />
-            <span className="traffic-light tl-yellow" />
-            <span className="traffic-light tl-green" />
-          </div>
+          {showCustomTrafficLights ? (
+            <div className="traffic-lights" aria-hidden="true">
+              <span className="traffic-light tl-red" />
+              <span className="traffic-light tl-yellow" />
+              <span className="traffic-light tl-green" />
+            </div>
+          ) : null}
           <div className="brand-mark" />
           <span className="app-name">Vivido</span>
           <nav className="menu-hint">
@@ -532,15 +950,29 @@ export function App() {
               <>
                 <div className="media-grid">
                   {visibleVideoAssets.map((asset) => (
-                      <div className="media-thumb" key={asset.id} title={`${asset.sourceName} · ${asset.technicalSummary}`}>
-                        <div className={`media-thumb-bg ${getAssetTone(asset)}`}>
+                      <div
+                        className={`media-thumb${selectedAsset?.id === asset.id ? " selected" : ""}`}
+                        key={asset.id}
+                        role="button"
+                        tabIndex={0}
+                        title={`${asset.sourceName} · ${asset.technicalSummary}`}
+                        onClick={() => handleSelectAsset(asset.id)}
+                        onKeyDown={(event) => handleSelectableKeyDown(event, asset.id)}
+                      >
+                        <div
+                          className={`media-thumb-bg ${asset.metadata.thumbnailDataUrl ? "media-thumb-has-image" : getAssetTone(asset)}`}
+                          style={getAssetThumbnailStyle(asset)}
+                        >
                           <span className="media-thumb-icon">{getAssetIcon(asset)}</span>
                         </div>
                         <button
                           className="media-thumb-remove"
                           type="button"
                           aria-label={`Remove ${asset.sourceName}`}
-                          onClick={() => handleRemoveMedia(asset.id)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleRemoveMedia(asset.id);
+                          }}
                         >
                           ×
                         </button>
@@ -549,35 +981,11 @@ export function App() {
                       </div>
                   ))}
                 </div>
-
-                <div className="media-list-section">
-                  <span className="section-label">Clip Details</span>
-                  <div className="media-list">
-                    {visibleVideoAssets.map((asset) => (
-                      <div className="media-list-item" key={`${asset.id}-details`}>
-                        <span className="media-list-item-icon">{getAssetIcon(asset)}</span>
-                        <div className="media-list-item-copy">
-                          <strong>{asset.sourceName}</strong>
-                          <p>{asset.technicalSummary}</p>
-                        </div>
-                        <button
-                          className="media-remove-button"
-                          type="button"
-                          aria-label={`Remove ${asset.sourceName}`}
-                          onClick={() => handleRemoveMedia(asset.id)}
-                        >
-                          Remove
-                        </button>
-                        <span className="media-usage-pill">{asset.durationLabel}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </>
             ) : (
               <div className="media-grid">
                 {mediaPreviewItems.map((item) => (
-                  <div className="media-thumb" key={item.name}>
+                  <div className="media-thumb media-thumb-preview" key={item.name}>
                     <div className={`media-thumb-bg ${item.tone}`}>
                       <span className="media-thumb-icon">{item.icon}</span>
                     </div>
@@ -593,23 +1001,70 @@ export function App() {
                 <span className="section-label">Audio Assets</span>
                 <div className="media-list">
                   {visibleAudioAssets.map((asset) => (
-                    <div className="media-list-item" key={asset.id}>
+                    <div
+                      className={`media-browser-row${selectedAsset?.id === asset.id ? " selected" : ""}`}
+                      key={asset.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleSelectAsset(asset.id)}
+                      onKeyDown={(event) => handleSelectableKeyDown(event, asset.id)}
+                    >
                       <span className="media-list-item-icon">{getAssetIcon(asset)}</span>
-                      <div className="media-list-item-copy">
+                      <div className="media-browser-row-copy">
                         <strong>{asset.sourceName}</strong>
-                        <p>{asset.technicalSummary}</p>
+                        <div className="media-browser-row-meta">
+                          {getAssetMetaChips(asset).slice(0, 3).map((chip) => (
+                            <span className="media-meta-chip" key={`${asset.id}-audio-row-${chip}`}>
+                              {chip}
+                            </span>
+                          ))}
+                        </div>
                       </div>
+                      <span className="media-usage-pill">{asset.usageStatus}</span>
                       <button
                         className="media-remove-button"
                         type="button"
                         aria-label={`Remove ${asset.sourceName}`}
-                        onClick={() => handleRemoveMedia(asset.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleRemoveMedia(asset.id);
+                        }}
                       >
                         Remove
                       </button>
-                      <span className="media-usage-pill">{asset.usageStatus}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+            ) : null}
+
+            {selectedAsset ? (
+              <div className="media-list-section">
+                <span className="section-label">Selected Asset</span>
+                <div className="media-list-item selected-asset-card">
+                  <span className="media-list-item-icon">{getAssetIcon(selectedAsset)}</span>
+                  <div className="media-list-item-copy">
+                    <strong>{selectedAsset.sourceName}</strong>
+                  </div>
+                  <span className="media-usage-pill">
+                    {selectedAsset.kind === "audio" ? selectedAsset.usageStatus : selectedAsset.durationLabel}
+                  </span>
+                  <div className="media-list-item-meta">
+                    {getAssetMetaChips(selectedAsset).map((chip) => (
+                      <span className="media-meta-chip" key={`${selectedAsset.id}-selected-${chip}`}>
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="media-scan-status">{getScanStatusCopy(selectedAsset)}</p>
+                  <button
+                    className="media-remove-button"
+                    type="button"
+                    aria-label={`Remove ${selectedAsset.sourceName}`}
+                    onClick={() => handleRemoveMedia(selectedAsset.id)}
+                  >
+                    Remove
+                  </button>
                 </div>
               </div>
             ) : null}
@@ -725,38 +1180,185 @@ export function App() {
               <div className="preview-toolbar">
                 <span className="preview-toolbar-label">Program Monitor</span>
                 <div className="preview-toolbar-actions">
-                  <button className="mini-tool-button" type="button">
+                  <button
+                    className={`mini-tool-button${previewZoomMode === "fit" ? " primary" : ""}`}
+                    type="button"
+                    onClick={() => setPreviewZoomMode("fit")}
+                  >
                     Fit
                   </button>
-                  <button className="mini-tool-button" type="button">
+                  <button
+                    className={`mini-tool-button${previewZoomMode === "native" ? " primary" : ""}`}
+                    type="button"
+                    onClick={() => setPreviewZoomMode("native")}
+                  >
                     100%
                   </button>
                 </div>
               </div>
               <div className="preview-center">
-                <div className="preview-frame">
+                <div className={`preview-frame${activeTab === "editor" && selectedAsset ? " has-selected-asset" : ""}`}>
                   <div className="preview-scene" aria-hidden="true" />
                   <div className="safe-area-frame" aria-hidden="true" />
-                  <span className="preview-kicker">{activeTab.toUpperCase()}</span>
-                  <h1>{activeTabLabel}</h1>
-                  <p>{renderTabBlurb(activeTab)}</p>
-                  <textarea
-                    className="editor-notes"
-                    placeholder="Shell notes for this project. Autosave will persist these notes into the .vivido file."
-                    value={currentProject.editorNotes}
-                    onKeyDown={handleTextFieldKeyDown}
-                    onChange={(event) =>
-                      applyProjectChange((project) => ({
-                        ...project,
-                        editorNotes: event.target.value
-                      }))
-                    }
-                  />
-                  <div className="preview-project-meta">
-                    <span>{currentProject.name}</span>
-                    <span>{projectSummary}</span>
-                    <span>{isDirty ? "Unsaved changes" : "All changes saved"}</span>
-                  </div>
+                  {activeTab === "editor" && selectedAsset ? (
+                    <div className="monitor-player">
+                      <div
+                        className={`monitor-player-canvas${selectedAsset.kind === "audio" ? " audio" : ""}`}
+                        ref={monitorCanvasRef}
+                      >
+                        {selectedAsset.kind === "audio" ? (
+                          <div className="audio-preview-state">
+                            {selectedAssetRuntimeSource ? (
+                              <audio
+                                className="selected-audio-player"
+                                preload="metadata"
+                                ref={assignPreviewMediaRef}
+                                src={selectedAssetRuntimeSource}
+                                onLoadedMetadata={syncPreviewState}
+                                onTimeUpdate={syncPreviewState}
+                                onPlay={syncPreviewState}
+                                onPause={syncPreviewState}
+                                onEnded={syncPreviewState}
+                              />
+                            ) : (
+                              <span className="audio-preview-icon">♪</span>
+                            )}
+                            <strong>{selectedAsset.sourceName}</strong>
+                            <p>
+                              {selectedAssetRuntimeSource
+                                ? "Audio preview is available in-session. Waveform preview comes next."
+                                : "Audio source is unavailable in this recovered preview session. Re-import to restore playback."}
+                            </p>
+                          </div>
+                        ) : selectedAsset.kind === "video" && selectedAssetRuntimeSource ? (
+                          <div
+                            className={`monitor-player-viewport ${getMonitorViewportMode(selectedAsset)}${previewZoomMode === "native" ? " native" : ""}`}
+                            style={getMonitorViewportStyle(selectedAsset, previewZoomMode, monitorCanvasSize)}
+                          >
+                            <video
+                              key={`${selectedAsset.id}-${selectedAssetRuntimeSource}`}
+                              className="monitor-player-media"
+                              preload="metadata"
+                              ref={assignPreviewMediaRef}
+                              src={selectedAssetRuntimeSource}
+                              playsInline
+                              onLoadedMetadata={syncPreviewState}
+                              onTimeUpdate={syncPreviewState}
+                              onPlay={syncPreviewState}
+                              onPause={syncPreviewState}
+                              onEnded={syncPreviewState}
+                            />
+                          </div>
+                        ) : selectedAsset.kind === "image" && (selectedAssetRuntimeSource || selectedAsset.metadata.thumbnailDataUrl) ? (
+                          <div
+                            className={`monitor-player-viewport ${getMonitorViewportMode(selectedAsset)}${previewZoomMode === "native" ? " native" : ""}`}
+                            style={getMonitorViewportStyle(selectedAsset, previewZoomMode, monitorCanvasSize)}
+                          >
+                            <img
+                              key={`${selectedAsset.id}-${imageMonitorError ? "thumb" : "src"}`}
+                              className="monitor-player-media"
+                              alt={selectedAsset.sourceName}
+                              src={
+                                imageMonitorError && selectedAsset.metadata.thumbnailDataUrl
+                                  ? selectedAsset.metadata.thumbnailDataUrl
+                                  : (selectedAssetRuntimeSource || selectedAsset.metadata.thumbnailDataUrl || "")
+                              }
+                              onError={() => {
+                                if (!imageMonitorError && selectedAsset.metadata.thumbnailDataUrl) {
+                                  setImageMonitorError(true);
+                                }
+                              }}
+                            />
+                          </div>
+                        ) : selectedAsset.metadata.thumbnailDataUrl ? (
+                          <div
+                            className={`monitor-player-viewport ${getMonitorViewportMode(selectedAsset)}${previewZoomMode === "native" ? " native" : ""}`}
+                            style={getMonitorViewportStyle(selectedAsset, previewZoomMode, monitorCanvasSize)}
+                          >
+                            <img
+                              key={`${selectedAsset.id}-${selectedAsset.metadata.thumbnailDataUrl}`}
+                              className="monitor-player-media"
+                              alt={selectedAsset.sourceName}
+                              src={selectedAsset.metadata.thumbnailDataUrl}
+                            />
+                          </div>
+                        ) : (
+                          <div className="monitor-player-fallback">
+                            <span>{getAssetIcon(selectedAsset)}</span>
+                            <p>Preview image still loading.</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="monitor-player-footer">
+                        <span className="preview-kicker">Selected Asset</span>
+                        <div className="monitor-player-header">
+                          <strong>{selectedAsset.sourceName}</strong>
+                          <span className="monitor-player-duration">{getPrimaryAssetStatus(selectedAsset)}</span>
+                        </div>
+                        {(selectedAsset.kind === "video" || selectedAsset.kind === "audio") ? (
+                          <div className={`monitor-player-transport${canPreviewPlayback ? "" : " disabled"}`}>
+                            <div className="monitor-player-buttons">
+                              <button className="mini-tool-button" type="button" onClick={handleResetPreviewPlayback} disabled={!canPreviewPlayback}>
+                                ↺
+                              </button>
+                              <button
+                                className="mini-tool-button primary"
+                                type="button"
+                                onClick={handleTogglePreviewPlayback}
+                                disabled={!canPreviewPlayback}
+                                aria-label={isPreviewPlaying ? "Pause preview" : "Play preview"}
+                              >
+                                {isPreviewPlaying ? "❚❚" : "▶"}
+                              </button>
+                            </div>
+                            <span className="monitor-player-time">{formatPreviewTime(previewCurrentTime)}</span>
+                            <input
+                              className="monitor-player-scrub"
+                              type="range"
+                              min={0}
+                              max={previewDuration || 0}
+                              step={0.01}
+                              value={Math.min(previewCurrentTime, previewDuration || 0)}
+                              onChange={handlePreviewScrub}
+                              disabled={!canPreviewPlayback}
+                            />
+                            <span className="monitor-player-time">{formatPreviewTime(previewDuration)}</span>
+                          </div>
+                        ) : null}
+                        <div className="monitor-player-chips">
+                          {getAssetMetaChips(selectedAsset).map((chip) => (
+                            <span className="media-meta-chip" key={`preview-${selectedAsset.id}-${chip}`}>
+                              {chip}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="monitor-player-status">{getPreviewAvailabilityMessage()}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="preview-kicker">{activeTab.toUpperCase()}</span>
+                      <h1>{activeTabLabel}</h1>
+                      <p>{renderTabBlurb(activeTab)}</p>
+                      <textarea
+                        className="editor-notes"
+                        placeholder="Shell notes for this project. Autosave will persist these notes into the .vivido file."
+                        value={currentProject.editorNotes}
+                        onKeyDown={handleTextFieldKeyDown}
+                        onChange={(event) =>
+                          applyProjectChange((project) => ({
+                            ...project,
+                            editorNotes: event.target.value
+                          }))
+                        }
+                      />
+                      <div className="preview-project-meta">
+                        <span>{currentProject.name}</span>
+                        <span>{projectSummary}</span>
+                        <span>{isDirty ? "Unsaved changes" : "All changes saved"}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="preview-meta">

@@ -1,6 +1,6 @@
 # Vivido — Implementation Status
 
-**Last updated:** 2026-04-30
+**Last updated:** 2026-05-01
 
 ---
 
@@ -20,6 +20,7 @@
 
 - E1 Foundation Shell is functionally mature but still has a few foundation closeout items open
 - E2 Media Import & GPU Playback has started with import and asset-library groundwork
+- preview-mode selected video playback blocker was resolved: root cause was unstable React ref callback causing teardown on every render; fixed by moving teardown helper outside the component and wrapping the ref callback in useCallback with stable empty deps
 - repo/package structure is now in place
 - dependencies are installed
 - typecheck and build are passing
@@ -51,22 +52,45 @@
 - drag-and-drop import now has an in-UI discoverability hint near the asset library header
 - imported assets can now be removed from the current library and the rail search input is visually quieter
 - media detail rows now handle long filenames more gracefully
+- desktop media scans now attempt deeper `ffprobe` probing for frame rate, color profile, codec, and technical timing where available
+- asset rows now expose scan-source labels so technical metadata can be interpreted more honestly during testing
+- partial scan states now render as structured metadata chips plus a softer scan-status line, so preview-mode gaps read as incomplete data rather than broken UI
+- preview-mode video imports now attempt lightweight frame-rate estimation instead of leaving fps blank in every browser-scanned case
+- desktop color-profile labels are now normalized into more human-readable output instead of raw ffprobe tokens
+- imported video/image assets now attempt real renderer-generated thumbnails instead of always using abstract placeholder art
+- desktop deep-scan now attempts native thumbnail extraction through `ffmpeg` candidates before relying on the renderer fallback path
+- the media sidebar now uses selection-driven inspection instead of repeating every asset as a full detail card, reducing long-scroll duplication
+- selecting an asset now updates the center monitor with a real preview state for visual media or an audio-ready state for audio assets
+- selected assets now also keep transient in-session preview source URLs so the monitor can open real video/audio previews instead of only static thumbnail states
+- selected media in the monitor now has a first custom playback-control layer with play/pause, jump-to-start, and scrubbing
+- the selected-asset monitor player has been rebuilt as a dedicated viewport + footer composition instead of a nested card inside the stage
+- the monitor toolbar now supports `Fit` and `100%` viewer modes for selected media
+- the new player surface uses detected media dimensions to drive a dedicated viewport instead of only showing resolution as metadata text
+- selected media now sizes against the measured monitor canvas in pixels, which is more reliable for repeated portrait-media selections than percentage-based viewport rules
+- selected preview media now explicitly tears down the previous HTML media element before loading the next one, to avoid black-screen / `0:00` carryover after switching between imported videos
+- the over-broad selection-change teardown hook was removed after it caused newly mounted preview players to be torn down too early
 
 ---
 
 ## Next Task
 
-Advance E2 Media Import honestly:
+Preview playback is now stable. Resume E2 feature work:
 
-- add drag-and-drop import
-- replace placeholder media metadata with real extracted technical metadata
+- user-verify playback with 2–3 video files including portrait and landscape
+- verify play/pause/scrub/reset controls across multiple asset selections
+- continue FR3 monitor work: first-frame seek on asset selection, frame-accurate scrub
+- continue FR5 scan reliability improvements
+
+After that:
+
+- deepen FR5 scan coverage and reliability across desktop and preview paths
 - add thumbnail generation jobs
 - prepare first-frame preview / playback wiring
 - keep E1 closeout notes updated as remaining foundation items are addressed
 
 Most recent completed step:
 
-- E2 started with media import picker flows, project-backed media assets, and a real asset library in the left rail
+- fixed preview-mode video playback regression: assignPreviewMediaRef was an inline function (new reference on every render), causing React to call teardown → remove src → reload blank on every timeupdate/loadedmetadata event; fixed by wrapping in useCallback with empty deps and moving the teardown helper outside the App component
 
 Primary file:
 
@@ -96,3 +120,4 @@ Primary file:
 5. `_designs/app-ui/01-timeline-editor.html`
 6. `_bmad-output/implementation-artifacts/00-next-agent-handoff.md`
 7. `_bmad-output/implementation-artifacts/01-e1-foundation-handoff.md`
+8. `NEXT_AGENT_HANDOFF.md`

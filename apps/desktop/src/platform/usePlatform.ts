@@ -133,6 +133,11 @@ type PreviewImportCandidate = {
   file?: File;
 };
 
+type ImportedAssetBuildResult = {
+  assets: MediaAsset[];
+  previewSources: Record<string, string>;
+};
+
 type FileWithPath = File & {
   path?: string;
 };
@@ -150,19 +155,210 @@ function filePathToFileUrl(filePath: string) {
   return `file:///${encodeURI(normalized)}`;
 }
 
+function generateImageThumbnail(sourceUrl: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      const targetWidth = 320;
+      const targetHeight = 180;
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        resolve(null);
+        return;
+      }
+
+      const scale = Math.max(targetWidth / image.naturalWidth, targetHeight / image.naturalHeight);
+      const drawWidth = image.naturalWidth * scale;
+      const drawHeight = image.naturalHeight * scale;
+      const offsetX = (targetWidth - drawWidth) / 2;
+      const offsetY = (targetHeight - drawHeight) / 2;
+
+      context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
+    image.onerror = () => resolve(null);
+    image.src = sourceUrl;
+  });
+}
+
+function seekVideo(video: HTMLVideoElement, targetTime: number) {
+  return new Promise<void>((resolve) => {
+    const handleSeeked = () => {
+      video.removeEventListener("seeked", handleSeeked);
+      resolve();
+    };
+
+    video.addEventListener("seeked", handleSeeked, { once: true });
+    video.currentTime = targetTime;
+  });
+}
+
+async function generateVideoThumbnail(video: HTMLVideoElement): Promise<string | null> {
+  try {
+    const targetWidth = 320;
+    const targetHeight = 180;
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const context = canvas.getContext("2d");
+
+    if (!context || !video.videoWidth || !video.videoHeight) {
+      return null;
+    }
+
+    const safeDuration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+    const targetTime = Math.min(Math.max(safeDuration * 0.15, 0.1), Math.max(safeDuration - 0.1, 0.1));
+    await seekVideo(video, targetTime);
+
+    const scale = Math.max(targetWidth / video.videoWidth, targetHeight / video.videoHeight);
+    const drawWidth = video.videoWidth * scale;
+    const drawHeight = video.videoHeight * scale;
+    const offsetX = (targetWidth - drawWidth) / 2;
+    const offsetY = (targetHeight - drawHeight) / 2;
+
+    context.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+    return canvas.toDataURL("image/jpeg", 0.82);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeFrameRate(frameRate: number | null) {
+  if (frameRate == null || !Number.isFinite(frameRate) || frameRate <= 0) {
+    return null;
+  }
+
+  const commonRates = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
+  const nearest = commonRates.find((candidate) => Math.abs(candidate - frameRate) < 0.08);
+
+  if (nearest != null) {
+    return nearest;
+  }
+
+  return Math.round(frameRate * 100) / 100;
+}
+
+async function estimatePreviewVideoFrameRate(video: HTMLVideoElement): Promise<number | null> {
+  if (typeof video.requestVideoFrameCallback !== "function") {
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    let firstFrameCount: number | null = null;
+    let firstMediaTime: number | null = null;
+    let lastFrameCount: number | null = null;
+    let lastMediaTime: number | null = null;
+
+    const finish = async (frameRate: number | null) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      window.clearTimeout(timeoutId);
+
+      try {
+        video.pause();
+      } catch {
+        // ignore pause failures for detached preview elements
+      }
+
+      resolve(normalizeFrameRate(frameRate));
+    };
+
+    const handleFrame: VideoFrameRequestCallback = (_now, metadata) => {
+      if (settled) {
+        return;
+      }
+
+      if (firstFrameCount == null || firstMediaTime == null) {
+        firstFrameCount = metadata.presentedFrames;
+        firstMediaTime = metadata.mediaTime;
+      }
+
+      lastFrameCount = metadata.presentedFrames;
+      lastMediaTime = metadata.mediaTime;
+
+      const deltaFrames = (lastFrameCount ?? 0) - (firstFrameCount ?? 0);
+      const deltaTime = (lastMediaTime ?? 0) - (firstMediaTime ?? 0);
+
+      if (deltaFrames >= 6 && deltaTime >= 0.2) {
+        void finish(deltaFrames / deltaTime);
+        return;
+      }
+
+      video.requestVideoFrameCallback(handleFrame);
+    };
+
+    const timeoutId = window.setTimeout(() => {
+      const deltaFrames = (lastFrameCount ?? 0) - (firstFrameCount ?? 0);
+      const deltaTime = (lastMediaTime ?? 0) - (firstMediaTime ?? 0);
+      void finish(deltaFrames > 0 && deltaTime > 0 ? deltaFrames / deltaTime : null);
+    }, 1400);
+
+    video.muted = true;
+    video.playsInline = true;
+
+    void video
+      .play()
+      .then(() => {
+        video.requestVideoFrameCallback(handleFrame);
+      })
+      .catch(() => {
+        void finish(null);
+      });
+  });
+}
+
+function releaseScanElement(el: HTMLVideoElement | HTMLAudioElement | HTMLImageElement) {
+  try {
+    if (el instanceof HTMLVideoElement || el instanceof HTMLAudioElement) {
+      el.pause();
+    }
+  } catch {
+    // ignore
+  }
+  el.removeAttribute("src");
+  if (el instanceof HTMLVideoElement || el instanceof HTMLAudioElement) {
+    el.load();
+  }
+}
+
 function loadMetadataFromVideoSource(sourceUrl: string): Promise<Partial<MediaAssetMetadata>> {
   return new Promise((resolve) => {
     const video = document.createElement("video");
     video.preload = "metadata";
-    video.onloadedmetadata = () => {
+    video.onloadedmetadata = async () => {
+      // Capture values before any async ops that might mutate the element
+      const durationSeconds = Number.isFinite(video.duration) ? video.duration : null;
+      const width = video.videoWidth || null;
+      const height = video.videoHeight || null;
+
+      const frameRate = await estimatePreviewVideoFrameRate(video);
+      const thumbnailDataUrl = await generateVideoThumbnail(video);
+
+      // Release the browser decode context so it doesn't compete with the main player
+      releaseScanElement(video);
+
       resolve({
-        durationSeconds: Number.isFinite(video.duration) ? video.duration : null,
-        width: video.videoWidth || null,
-        height: video.videoHeight || null,
+        durationSeconds,
+        width,
+        height,
+        frameRate,
+        thumbnailDataUrl,
+        codecName: null,
         probeSource: "browser"
       });
     };
-    video.onerror = () => resolve({ probeSource: "fallback" });
+    video.onerror = () => {
+      releaseScanElement(video);
+      resolve({ probeSource: "fallback" });
+    };
     video.src = sourceUrl;
   });
 }
@@ -192,14 +388,20 @@ function loadMetadataFromAudioSource(sourceUrl: string, file?: File): Promise<Pa
     const audio = document.createElement("audio");
     audio.preload = "metadata";
     audio.onloadedmetadata = async () => {
+      const durationSeconds = Number.isFinite(audio.duration) ? audio.duration : null;
       const decoded = await loadAudioDecodeMetadata(file);
+      releaseScanElement(audio);
       resolve({
-        durationSeconds: Number.isFinite(audio.duration) ? audio.duration : null,
+        durationSeconds,
         ...decoded,
+        codecName: null,
         probeSource: "browser"
       });
     };
-    audio.onerror = () => resolve({ probeSource: "fallback" });
+    audio.onerror = () => {
+      releaseScanElement(audio);
+      resolve({ probeSource: "fallback" });
+    };
     audio.src = sourceUrl;
   });
 }
@@ -207,10 +409,13 @@ function loadMetadataFromAudioSource(sourceUrl: string, file?: File): Promise<Pa
 function loadMetadataFromImageSource(sourceUrl: string): Promise<Partial<MediaAssetMetadata>> {
   return new Promise((resolve) => {
     const image = new Image();
-    image.onload = () => {
+    image.onload = async () => {
+      const thumbnailDataUrl = await generateImageThumbnail(sourceUrl);
       resolve({
         width: image.naturalWidth || null,
         height: image.naturalHeight || null,
+        thumbnailDataUrl,
+        codecName: null,
         probeSource: "browser"
       });
     };
@@ -267,21 +472,42 @@ function openPreviewMediaPicker(): Promise<PreviewImportCandidate[]> {
 async function buildImportedAssets(
   candidates: PreviewImportCandidate[],
   isDesktopRuntime: boolean
-): Promise<MediaAsset[]> {
-  return Promise.all(
+): Promise<ImportedAssetBuildResult> {
+  const previewSources: Record<string, string> = {};
+
+  const assets = await Promise.all(
     candidates.map(async ({ filePath, file }) => {
       const baseAsset = createImportedAsset(filePath);
+      const previewSource =
+        file != null
+          ? URL.createObjectURL(file)
+          : baseAsset.kind === "audio" || baseAsset.kind === "video" || baseAsset.kind === "image"
+            ? filePathToFileUrl(filePath)
+            : "";
+
+      if (previewSource) {
+        previewSources[baseAsset.id] = previewSource;
+      }
 
       if (isDesktopRuntime && filePath.startsWith("/") && window.electronAPI?.media) {
         const metadata = scanMediaMetadataResponseSchema.parse(
           await window.electronAPI.media.scanMetadata(filePath)
         );
-        return enrichImportedAsset(baseAsset, metadata);
+        if (baseAsset.kind === "audio") {
+          return enrichImportedAsset(baseAsset, metadata);
+        }
+        const previewEnriched = await scanPreviewAssetMetadata(baseAsset, file);
+        return enrichImportedAsset(previewEnriched, metadata);
       }
 
       return scanPreviewAssetMetadata(baseAsset, file);
     })
   );
+
+  return {
+    assets,
+    previewSources
+  };
 }
 
 function readPreviewProject(): VividoProject | null {
@@ -417,7 +643,7 @@ export function usePlatform() {
       description: "Grouped capability API scaffold. Real Electron/native implementations will be wired behind these namespaces.",
       media: {
         async importFiles(): Promise<
-          SuccessResult<{ assets: MediaAsset[]; duplicateCount: number }> | CancelledResult | UnsupportedResult
+          SuccessResult<{ assets: MediaAsset[]; duplicateCount: number; previewSources: Record<string, string> }> | CancelledResult | UnsupportedResult
         > {
           let candidates: PreviewImportCandidate[] = [];
 
@@ -449,18 +675,19 @@ export function usePlatform() {
             }
           }
 
-          const assets = await buildImportedAssets(candidates, isDesktopRuntime);
+          const imported = await buildImportedAssets(candidates, isDesktopRuntime);
 
           return {
             ok: true,
             data: {
-              assets,
-              duplicateCount: 0
+              assets: imported.assets,
+              duplicateCount: 0,
+              previewSources: imported.previewSources
             }
           };
         },
         async importDroppedFiles(files: File[]): Promise<
-          SuccessResult<{ assets: MediaAsset[]; duplicateCount: number }> | CancelledResult | UnsupportedResult
+          SuccessResult<{ assets: MediaAsset[]; duplicateCount: number; previewSources: Record<string, string> }> | CancelledResult | UnsupportedResult
         > {
           if (files.length === 0) {
             return {
@@ -480,13 +707,14 @@ export function usePlatform() {
             };
           });
 
-          const assets = await buildImportedAssets(candidates, isDesktopRuntime);
+          const imported = await buildImportedAssets(candidates, isDesktopRuntime);
 
           return {
             ok: true,
             data: {
-              assets,
-              duplicateCount: 0
+              assets: imported.assets,
+              duplicateCount: 0,
+              previewSources: imported.previewSources
             }
           };
         }

@@ -36,8 +36,10 @@ export const mediaMetadataSchema = z.object({
   height: z.number().nullable(),
   frameRate: z.number().nullable(),
   colorSpace: z.string().nullable(),
+  codecName: z.string().nullable(),
   sampleRate: z.number().nullable(),
   channels: z.number().nullable(),
+  thumbnailDataUrl: z.string().nullable(),
   probeSource: z.enum(["ffprobe", "browser", "fallback"])
 });
 
